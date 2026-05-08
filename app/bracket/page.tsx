@@ -165,12 +165,7 @@ export default function BracketPage() {
 
         {/* Horizontal scroll bracket */}
         <div className="bk-scroll-area">
-          <div
-            className="bk-track"
-            style={{
-              width: rounds.length * COL_WIDTH + (rounds.length - 1) * COL_GAP + 48,
-            }}
-          >
+          <div className="bk-track">
             {rounds.map((col, colIdx) => {
               // Calculate spacing so cards vertically center-align to their "parent" pair
               const matchCount = col.matches.length
@@ -181,10 +176,7 @@ export default function BracketPage() {
                 <div
                   key={col.round}
                   className="bk-column"
-                  style={{
-                    width: COL_WIDTH,
-                    left: colIdx * (COL_WIDTH + COL_GAP) + 24,
-                  }}
+                  style={{ width: COL_WIDTH }}
                 >
                   {/* Sticky round label */}
                   <div className="bk-col-header">
@@ -349,25 +341,22 @@ export default function BracketPage() {
 
         /* ── Track (the wide inner element) ── */
         .bk-track {
-          position: relative;
-          min-height: 100%;
-          padding-top: 8px;
+          display: flex;
+          align-items: flex-start;
+          gap: ${COL_GAP}px;
+          padding: 8px 24px 40px;
+          min-width: max-content;
         }
 
         /* ── Column per round ── */
         .bk-column {
-          position: absolute;
-          top: 0;
+          flex-shrink: 0;
         }
         .bk-col-header {
-          position: sticky;
-          top: 0;
-          z-index: 15;
           display: flex;
           align-items: baseline;
           gap: 8px;
           padding: 8px 0 10px;
-          background: linear-gradient(180deg, rgba(5, 8, 14, 0.95) 60%, rgba(5, 8, 14, 0) 100%);
         }
         .bk-col-label {
           font-size: 11px;
