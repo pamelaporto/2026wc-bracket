@@ -1,0 +1,145 @@
+{
+  "groups": {
+    "A": [
+      { "id": "mexico", "name": "Mexico", "colors": ["#006847", "#FFFFFF", "#CE1126"], "is_placeholder": false },
+      { "id": "south-africa", "name": "South Africa", "colors": ["#007A4D", "#FFFFFF", "#000000"], "is_placeholder": false },
+      { "id": "south-korea", "name": "South Korea", "colors": ["#FFFFFF", "#003478", "#C60C30"], "is_placeholder": false },
+      {
+        "id": "uefa-playoff-d",
+        "name": "Winner UEFA Playoff D",
+        "is_placeholder": true,
+        "placeholder_options": [
+          { "id": "denmark", "name": "Denmark", "colors": ["#C60C30", "#FFFFFF", "#C60C30"] },
+          { "id": "north-macedonia", "name": "North Macedonia", "colors": ["#D20000", "#FFE600", "#D20000"] },
+          { "id": "czechia", "name": "Czechia", "colors": ["#FFFFFF", "#D7141A", "#11457E"] },
+          { "id": "ireland", "name": "Ireland", "colors": ["#169B62", "#FFFFFF", "#FF883E"] }
+        ]
+      }
+    ],
+
+    "B": [
+      { "id": "canada", "name": "Canada", "colors": ["#D80621", "#FFFFFF", "#D80621"], "is_placeholder": false },
+      {
+        "id": "uefa-playoff-a",
+        "name": "Winner UEFA Playoff A",
+        "is_placeholder": true,
+        "placeholder_options": [
+          { "id": "italy", "name": "Italy", "colors": ["#009246", "#FFFFFF", "#CE2B37"] },
+          { "id": "northern-ireland", "name": "Northern Ireland", "colors": ["#FFFFFF", "#006400", "#FFFFFF"] },
+          { "id": "wales", "name": "Wales", "colors": ["#FFFFFF", "#D30731", "#FFFFFF"] },
+          { "id": "bosnia-and-herzegovina", "name": "Bosnia and Herzegovina", "colors": ["#002395", "#FECB00", "#FFFFFF"] }
+        ]
+      },
+      { "id": "qatar", "name": "Qatar", "colors": ["#8A1538", "#FFFFFF", "#8A1538"], "is_placeholder": false },
+      { "id": "switzerland", "name": "Switzerland", "colors": ["#D52B1E", "#FFFFFF", "#D52B1E"], "is_placeholder": false }
+    ],
+
+    "C": [
+      { "id": "brazil", "name": "Brazil", "colors": ["#009C3B", "#FFDF00"], "is_placeholder": false },
+      { "id": "morocco", "name": "Morocco", "colors": ["#C1272D", "#006233", "#C1272D"], "is_placeholder": false },
+      { "id": "haiti", "name": "Haiti", "colors": ["#00209F", "#D21034", "#FFFFFF"], "is_placeholder": false },
+      { "id": "scotland", "name": "Scotland", "colors": ["#005EB8", "#FFFFFF", "#005EB8"], "is_placeholder": false }
+    ],
+
+    "D": [
+      { "id": "usa", "name": "United States", "colors": ["#3C3B6E", "#FFFFFF", "#B22234"], "is_placeholder": false },
+      { "id": "paraguay", "name": "Paraguay", "colors": ["#D52B1E", "#FFFFFF", "#0038A8"], "is_placeholder": false },
+      { "id": "australia", "name": "Australia", "colors": ["#012169", "#FFFFFF", "#E4002B"], "is_placeholder": false },
+      {
+        "id": "uefa-playoff-c",
+        "name": "Winner UEFA Playoff C",
+        "is_placeholder": true,
+        "placeholder_options": [
+          { "id": "turkey", "name": "Türkiye", "colors": ["#E30A17", "#FFFFFF", "#E30A17"] },
+          { "id": "romania", "name": "Romania", "colors": ["#002B7F", "#FCD116", "#CE1126"] },
+          { "id": "slovakia", "name": "Slovakia", "colors": ["#FFFFFF", "#0B4EA2", "#EE1C25"] },
+          { "id": "kosovo", "name": "Kosovo", "colors": ["#244AA5", "#D0A650", "#244AA5"] }
+        ]
+      }
+    ],
+
+    "E": [
+      { "id": "germany", "name": "Germany", "colors": ["#000000", "#DD0000", "#FFCE00"], "is_placeholder": false },
+      { "id": "curacao", "name": "Curaçao", "colors": ["#002B7F", "#F9E547", "#002B7F"], "is_placeholder": false },
+      { "id": "ivory-coast", "name": "Ivory Coast", "colors": ["#F77F00", "#FFFFFF", "#009E60"], "is_placeholder": false },
+      { "id": "ecuador", "name": "Ecuador", "colors": ["#FCD116", "#003893", "#CE1126"], "is_placeholder": false }
+    ],
+
+    "F": [
+      { "id": "netherlands", "name": "Netherlands", "colors": ["#AE1C28", "#FFFFFF", "#21468B"], "is_placeholder": false },
+      { "id": "japan", "name": "Japan", "colors": ["#FFFFFF", "#BC002D", "#FFFFFF"], "is_placeholder": false },
+      {
+        "id": "uefa-playoff-b",
+        "name": "Winner UEFA Playoff B",
+        "is_placeholder": true,
+        "placeholder_options": [
+          { "id": "ukraine", "name": "Ukraine", "colors": ["#0057B7", "#FFD700", "#0057B7"] },
+          { "id": "sweden", "name": "Sweden", "colors": ["#006AA7", "#FECC00", "#006AA7"] },
+          { "id": "poland", "name": "Poland", "colors": ["#FFFFFF", "#DC143C", "#FFFFFF"] },
+          { "id": "albania", "name": "Albania", "colors": ["#E41E20", "#000000", "#E41E20"] }
+        ]
+      },
+      { "id": "tunisia", "name": "Tunisia", "colors": ["#E70013", "#FFFFFF", "#E70013"], "is_placeholder": false }
+    ],
+
+    "G": [
+      { "id": "belgium", "name": "Belgium", "colors": ["#000000", "#FFD90C", "#EF3340"], "is_placeholder": false },
+      { "id": "egypt", "name": "Egypt", "colors": ["#CE1126", "#FFFFFF", "#000000"], "is_placeholder": false },
+      { "id": "iran", "name": "Iran", "colors": ["#239F40", "#FFFFFF", "#DA0000"], "is_placeholder": false },
+      { "id": "new-zealand", "name": "New Zealand", "colors": ["#00247D", "#FFFFFF", "#CC142B"], "is_placeholder": false }
+    ],
+
+    "H": [
+      { "id": "spain", "name": "Spain", "colors": ["#AA151B", "#F1BF00", "#AA151B"], "is_placeholder": false },
+      { "id": "cabo-verde", "name": "Cape Verde", "colors": ["#003893", "#FFFFFF", "#CF2027"], "is_placeholder": false },
+      { "id": "saudi-arabia", "name": "Saudi Arabia", "colors": ["#006C35", "#FFFFFF", "#006C35"], "is_placeholder": false },
+      { "id": "uruguay", "name": "Uruguay", "colors": ["#FFFFFF", "#0038A8", "#FFFFFF"], "is_placeholder": false }
+    ],
+
+    "I": [
+      { "id": "france", "name": "France", "colors": ["#0055A4", "#FFFFFF", "#EF4135"], "is_placeholder": false },
+      { "id": "senegal", "name": "Senegal", "colors": ["#00853F", "#FDEF42", "#E31B23"], "is_placeholder": false },
+      {
+        "id": "fifa-playoff-2",
+        "name": "Winner FIFA Playoff 2",
+        "is_placeholder": true,
+        "placeholder_options": [
+          { "id": "bolivia", "name": "Bolivia", "colors": ["#D52B1E", "#F9E300", "#007934"] },
+          { "id": "suriname", "name": "Suriname", "colors": ["#377E3F", "#FFFFFF", "#B40A2D"] },
+          { "id": "iraq", "name": "Iraq", "colors": ["#CE1126", "#FFFFFF", "#000000"] }
+        ]
+      },
+      { "id": "norway", "name": "Norway", "colors": ["#BA0C2F", "#FFFFFF", "#00205B"], "is_placeholder": false }
+    ],
+
+    "J": [
+      { "id": "argentina", "name": "Argentina", "colors": ["#74ACDF", "#FFFFFF", "#74ACDF"], "is_placeholder": false },
+      { "id": "algeria", "name": "Algeria", "colors": ["#006233", "#FFFFFF", "#D21034"], "is_placeholder": false },
+      { "id": "austria", "name": "Austria", "colors": ["#ED2939", "#FFFFFF", "#ED2939"], "is_placeholder": false },
+      { "id": "jordan", "name": "Jordan", "colors": ["#000000", "#FFFFFF", "#007A3D"], "is_placeholder": false }
+    ],
+
+    "K": [
+      { "id": "portugal", "name": "Portugal", "colors": ["#006600", "#FF0000", "#006600"], "is_placeholder": false },
+      {
+        "id": "fifa-playoff-1",
+        "name": "Winner FIFA Playoff 1",
+        "is_placeholder": true,
+        "placeholder_options": [
+          { "id": "jamaica", "name": "Jamaica", "colors": ["#009B3A", "#FCD116", "#000000"] },
+          { "id": "new-caledonia", "name": "New Caledonia", "colors": ["#0035AD", "#FFFFFF", "#D21034"] },
+          { "id": "dr-congo", "name": "Democratic Republic of the Congo", "colors": ["#007FFF", "#F7D618", "#CE1021"] }
+        ]
+      },
+      { "id": "uzbekistan", "name": "Uzbekistan", "colors": ["#0099B5", "#FFFFFF", "#1EB53A"], "is_placeholder": false },
+      { "id": "colombia", "name": "Colombia", "colors": ["#FCD116", "#003893", "#CE1126"], "is_placeholder": false }
+    ],
+
+    "L": [
+      { "id": "england", "name": "England", "colors": ["#FFFFFF", "#CE1126", "#FFFFFF"], "is_placeholder": false },
+      { "id": "croatia", "name": "Croatia", "colors": ["#FF0000", "#FFFFFF", "#171796"], "is_placeholder": false },
+      { "id": "ghana", "name": "Ghana", "colors": ["#CE1126", "#FCD116", "#006B3F"], "is_placeholder": false },
+      { "id": "panama", "name": "Panama", "colors": ["#005293", "#FFFFFF", "#D21034"], "is_placeholder": false }
+    ]
+  }
+}
