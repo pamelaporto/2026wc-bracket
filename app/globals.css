@@ -2597,6 +2597,192 @@
   color: rgba(var(--wc-accent-rgb), 0.6);
 }
 
+/* ── Third-place ranked-list UI (Phase 1 prototype) ─────────────────────────── */
+.tp-rank-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 80px;
+  padding-bottom: 80px;
+  overflow: hidden;
+}
+
+.tp-rank-body {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.tp-rank-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.tp-rank-eyebrow {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(var(--wc-accent-rgb), 0.7);
+  margin: 0;
+}
+
+.tp-rank-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.tp-rank-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Wrapper that establishes the relative stacking context for the cut line */
+.tp-rank-list-wrap {
+  position: relative;
+  width: 100%;
+}
+
+/* The cut line across the list */
+.tp-cut-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tp-cut-line::before,
+.tp-cut-line::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(var(--wc-accent-rgb), 0.35);
+}
+
+.tp-cut-label {
+  font-family: var(--font-mono), monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(var(--wc-accent-rgb), 0.55);
+  white-space: nowrap;
+}
+
+/* The ordered list */
+ol.tp-rank-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Each drag row */
+.tp-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0 16px;
+  cursor: default;
+  user-select: none;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.25s ease;
+}
+.tp-row:hover {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Dimmed rows below the cut */
+.tp-row--out {
+  opacity: 0.4;
+}
+
+/* Drag handle button */
+.tp-row-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: rgba(255, 255, 255, 0.25);
+  background: transparent;
+  border: none;
+  padding: 0;
+  line-height: 1;
+  touch-action: none;
+  flex-shrink: 0;
+}
+.tp-row-handle:active {
+  cursor: grabbing;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Rank number */
+.tp-row-rank {
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+  width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Flag swatch */
+.tp-row-flag {
+  width: 28px;
+  height: 20px;
+  border-radius: 4px;
+  background-size: cover;
+  flex-shrink: 0;
+}
+
+/* Team name */
+.tp-row-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Group tag */
+.tp-row-group {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.28);
+  flex-shrink: 0;
+}
+/* ── end tp-rank-list ─────────────────────────────────────────────────────── */
+
 .stack-team-name {
   font-size: 15px;
   font-weight: 600;

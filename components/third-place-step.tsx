@@ -2,8 +2,8 @@
 
 import type React from "react"
 import { useRef, useState, useCallback, useEffect, useMemo } from "react"
-import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion"
-import { Check, Plus } from "lucide-react"
+import { motion, AnimatePresence, useMotionValue, useSpring, Reorder, useDragControls } from "framer-motion"
+import { Check, Plus, GripVertical } from "lucide-react"
 import { computeFlagGradient } from "@/lib/flags"
 import type { RankedThirdPlaceTeam } from "@/lib/thirdPlace"
 
@@ -16,9 +16,144 @@ type ThirdPlaceStepProps = {
   onBack: () => void
 }
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+const ADVANCE_COUNT = 8
+const ITEM_H = 64   // row height px
+const ITEM_GAP = 8  // gap between rows px
+// Top of cut line = 8 rows + 7 gaps + 4px breathing room
+const CUT_TOP = ADVANCE_COUNT * ITEM_H + (ADVANCE_COUNT - 1) * ITEM_GAP + 4
+
+// ─── RankRow sub-component ────────────────────────────────────────────────────
+function RankRow({
+  team,
+  rank,
+  isOut,
+}: {
+  team: RankedThirdPlaceTeam
+  rank: number
+  isOut: boolean
+}) {
+  const controls = useDragControls()
+
+  return (
+    <Reorder.Item
+      value={team.groupLetter}
+      dragListener={false}
+      dragControls={controls}
+      className={`tp-row${isOut ? " tp-row--out" : ""}`}
+      style={{ height: ITEM_H }}
+      whileDrag={{ scale: 1.03, zIndex: 50, boxShadow: "0 8px 32px rgba(0,0,0,0.45)" }}
+    >
+      {/* Drag handle */}
+      <button
+        className="tp-row-handle"
+        onPointerDown={(e) => { e.preventDefault(); controls.start(e) }}
+        aria-label={`Drag to reorder ${team.name}`}
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+
+      {/* Rank number */}
+      <span className="tp-row-rank">{rank}</span>
+
+      {/* Flag swatch */}
+      <div
+        className="tp-row-flag"
+        style={{ backgroundImage: computeFlagGradient(team.colors) }}
+      />
+
+      {/* Team name */}
+      <span className="tp-row-name">{team.name}</span>
+
+      {/* Group tag */}
+      <span className="tp-row-group">Group {team.groupLetter}</span>
+    </Reorder.Item>
+  )
+}
+
+// ─── New ThirdPlaceStep — ranked-list UI (Phase 1 prototype) ──────────────────
+export function ThirdPlaceStep({ teams, onBack }: ThirdPlaceStepProps) {
+  // Internal ranking state — initialise from the teams array order
+  const [rankedOrder, setRankedOrder] = useState<string[]>(() =>
+    teams.map((t) => t.groupLetter)
+  )
+
+  // Keep a letter→team lookup for rendering
+  const teamMap = useMemo(
+    () => new Map(teams.map((t) => [t.groupLetter, t])),
+    [teams]
+  )
+
+  if (teams.length === 0) {
+    return (
+      <div className="tp-rank-shell" style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
+        <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 15, margin: 0 }}>
+          No third-place teams found. Please go back and complete your group picks.
+        </p>
+        <button
+          style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.4)", fontSize: 13, padding: "8px 18px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit" }}
+          onClick={onBack}
+        >
+          Back to Groups
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="tp-rank-shell">
+      {/* Night stadium atmosphere */}
+      <div className="stadium-ambient" aria-hidden="true" />
+      <div className="stadium-glow" aria-hidden="true" />
+      <div className="stadium-vignette" aria-hidden="true" />
+
+      <div className="tp-rank-body">
+        {/* Header */}
+        <div className="tp-rank-header">
+          <p className="tp-rank-eyebrow">Third-Place Teams</p>
+          <h2 className="tp-rank-title">Rank all 12 · top 8 advance</h2>
+          <p className="tp-rank-sub">
+            Drag to reorder. The 8 teams above the line qualify for the Round of 32.
+          </p>
+        </div>
+
+        {/* List */}
+        <div className="tp-rank-list-wrap">
+          {/* Cut line sits behind the list at the calculated offset */}
+          <div className="tp-cut-line" style={{ top: CUT_TOP }}>
+            <span className="tp-cut-label">ADVANCES · TOP 8</span>
+          </div>
+
+          <Reorder.Group
+            axis="y"
+            values={rankedOrder}
+            onReorder={setRankedOrder}
+            className="tp-rank-list"
+            as="ol"
+          >
+            {rankedOrder.map((letter, i) => {
+              const team = teamMap.get(letter)
+              if (!team) return null
+              return (
+                <RankRow
+                  key={letter}
+                  team={team}
+                  rank={i + 1}
+                  isOut={i >= ADVANCE_COUNT}
+                />
+              )
+            })}
+          </Reorder.Group>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Legacy card-stack flow (preserved verbatim for rollback) ──────────────────
 const GROUP_ORDER = "ABCDEFGHIJKL".split("")
 
-export function ThirdPlaceStep({
+export function ThirdPlaceStepLegacy({
   teams,
   selectedGroups,
   onToggle,
