@@ -2,18 +2,16 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { LayoutGroup, motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion"
 import { GroupStack } from "@/components/group-stack"
-import { SaveBar } from "@/components/save-bar"
+import { HomeCarousel } from "@/components/home-carousel"
 import { RitualHeader, type RitualStep } from "@/components/ritual-header"
 import teamsData from "@/data/teams.json"
-import { computeFlagGradient } from "@/lib/flags"
 import {
-  extractThirdPlaceTeams,
   rankThirdPlaceTeams,
   resolveThirdPlaceSlots,
+  type ThirdPlaceTeam,
   type RankedThirdPlaceTeam,
-  getDefaultQualifiedTeams,
 } from "@/lib/thirdPlace"
 import { ThirdPlaceStep } from "@/components/third-place-step"
 
@@ -34,39 +32,31 @@ type TeamUI = {
 type GroupsState = Record<string, TeamUI[]>
 
 const STORAGE_KEY = "wc2026-bracket-draft-v5"
-const NAME_KEY = "wc2026-bracket-name-v1"
-const SAVED_KEY = "wc2026-bracket-saved"
 const THIRD_PLACE_KEY = "wc2026-third-place-selection-v1"
 
 function slugify(s: string) {
   return s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w-]/g, "")
 }
 
-// 0..1 stable-ish "random"
-function hash01(input: string) {
-  let h = 2166136261
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
-  return ((h >>> 0) % 1000) / 1000
-}
+
+
 
 export default function Home() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
-  const [savedName, setSavedName] = useState("")
   const [groups, setGroups] = useState<GroupsState>((teamsData as any).groups as GroupsState)
 
   // intro timing
   const [introExiting, setIntroExiting] = useState(false)
   const [introDone, setIntroDone] = useState(false)
-
-  // Track when user first reorders any team (to show SaveBar)
-  const [hasReordered, setHasReordered] = useState(false)
+  // letter the user clicked on the carousel (used to jump GroupStack to that group)
+  const [initialGroupLetter, setInitialGroupLetter] = useState<string | undefined>(undefined)
 
   // Step navigation
   const [currentStep, setCurrentStep] = useState<RitualStep>("groups")
+
+  // Lock count surfaced from GroupStack
+  const [lockedGroupsCount, setLockedGroupsCount] = useState(0)
 
   // Third-place selection state
   const [selectedThirdPlaceGroups, setSelectedThirdPlaceGroups] = useState<Set<string>>(new Set())
@@ -74,18 +64,8 @@ export default function Home() {
   // Always derive letters from teams.json (A–L)
   const groupLetters = useMemo(() => Object.keys((teamsData as any).groups ?? {}).sort(), [])
 
-  // Derive and rank third-place teams from current group standings
-  const rankedThirdPlaceTeams = useMemo((): RankedThirdPlaceTeam[] => {
-    const thirdPlaceTeams = extractThirdPlaceTeams(groups)
-    return rankThirdPlaceTeams(thirdPlaceTeams)
-  }, [groups])
-
   useEffect(() => {
     setMounted(true)
-
-    // restore saved name
-    const n = localStorage.getItem(NAME_KEY)
-    if (n) setSavedName(n)
 
     // restore saved picks (if they exist)
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -119,14 +99,6 @@ export default function Home() {
       }
     }
 
-    // Short + snappy (you wanted shorter)
-    const t1 = setTimeout(() => setIntroExiting(true), 1400)
-    const t2 = setTimeout(() => setIntroDone(true), 2600)
-
-    return () => {
-      clearTimeout(t1)
-      clearTimeout(t2)
-    }
   }, [groupLetters])
 
   useEffect(() => {
@@ -139,6 +111,14 @@ export default function Home() {
       localStorage.setItem(THIRD_PLACE_KEY, JSON.stringify([...selectedThirdPlaceGroups]))
     }
   }, [selectedThirdPlaceGroups, mounted])
+
+
+  // Called when a carousel card is clicked — letter is which group the user picked
+  const handleCarouselSelect = useCallback((letter: string) => {
+    setInitialGroupLetter(letter)
+    setIntroExiting(true)
+    setTimeout(() => setIntroDone(true), 650)
+  }, [])
 
   const groupsUI: GroupsState = useMemo(() => {
     return Object.fromEntries(
@@ -159,6 +139,40 @@ export default function Home() {
     )
   }, [groups])
 
+  // Derive third-place teams directly from groupsUI: teams[2] for each group A–L.
+  // Uses groupLetters (from teamsData, always A–L) rather than Object.keys(groupsUI)
+  // so this is immune to localStorage corruption shrinking or reordering group keys.
+  const rankedThirdPlaceTeams = useMemo((): RankedThirdPlaceTeam[] => {
+    const thirdPlaceTeams: ThirdPlaceTeam[] = groupLetters
+      .map((letter) => {
+        const team = groupsUI[letter]?.[2]
+        if (!team) return null
+        return {
+          id: team.id,
+          name: team.name,
+          colors: team.colors,
+          groupLetter: letter,
+          points: 0,
+          goalDifference: 0,
+          goalsScored: 0,
+          fairPlay: 0,
+        }
+      })
+      .filter((t): t is ThirdPlaceTeam => t !== null)
+    return rankThirdPlaceTeams(thirdPlaceTeams)
+  }, [groupLetters, groupsUI])
+
+  useEffect(() => {
+    if (currentStep === "thirdPlace") {
+      console.log("[ThirdPlace Debug]", {
+        currentStep,
+        groupLettersLength: groupLetters.length,
+        groupsUIKeys: Object.keys(groupsUI).sort(),
+        rankedThirdPlaceTeamsLength: rankedThirdPlaceTeams.length,
+      })
+    }
+  }, [currentStep, groupLetters, groupsUI, rankedThirdPlaceTeams])
+
   const completedGroups = useMemo(() => {
     return groupLetters.reduce((count, letter) => {
       const teams = groupsUI[letter] ?? []
@@ -169,19 +183,6 @@ export default function Home() {
 
   const handleTeamsReorder = (groupLetter: string, newTeams: TeamUI[]) => {
     setGroups((prev) => ({ ...prev, [groupLetter]: newTeams }))
-    // Show SaveBar on first reorder
-    if (!hasReordered) {
-      setHasReordered(true)
-    }
-  }
-
-  const handleSave = (username: string) => {
-    const clean = username.trim()
-    if (!clean) return
-    localStorage.setItem(NAME_KEY, clean)
-    setSavedName(clean)
-    // Navigate to third-place selection step
-    setCurrentStep("thirdPlace")
   }
 
   const handleToggleThirdPlace = useCallback((groupLetter: string) => {
@@ -208,131 +209,107 @@ export default function Home() {
     // Store the qualified teams and slot assignments
     localStorage.setItem(THIRD_PLACE_KEY, JSON.stringify([...selectedThirdPlaceGroups]))
     localStorage.setItem("wc2026-third-place-slots-v1", JSON.stringify(slotResult))
-    localStorage.setItem(SAVED_KEY, "true")
-    
+
     // Navigate to bracket page
     router.push("/bracket")
   }, [selectedThirdPlaceGroups, router])
+
+  const handleGoHome = useCallback(() => {
+    setCurrentStep("groups")
+    setIntroDone(false)
+    setIntroExiting(false)
+    setInitialGroupLetter(undefined)
+  }, [])
 
   const handleBackToGroups = useCallback(() => {
     setCurrentStep("groups")
   }, [])
 
   const handleContinueFromGroups = useCallback(() => {
-    if (completedGroups === groupLetters.length) {
-      // Save current state
-      if (savedName) {
-        localStorage.setItem(NAME_KEY, savedName)
-      }
-      setCurrentStep("thirdPlace")
-    }
-  }, [completedGroups, groupLetters.length, savedName])
+    setCurrentStep("thirdPlace")
+  }, [])
 
   const handleResetThirdPlace = useCallback(() => {
     setSelectedThirdPlaceGroups(new Set())
     localStorage.removeItem(THIRD_PLACE_KEY)
   }, [])
 
-  /**
-   * Intro flags must use the SAME ids as the group flags (layoutId = flag-{id})
-   * We build them from teamsData (not from localStorage) so the intro is stable.
-   */
-  const introFlags = useMemo(() => {
-    const result: Array<{ id: string; name: string; colors: string[] }> = []
-
-    groupLetters.forEach((letter) => {
-      const teams = ((teamsData as any).groups?.[letter] ?? []) as any[]
-      teams.forEach((t) => {
-        result.push({
-          id: t.id ?? t.team_id ?? slugify(t.name ?? "team"),
-          name: t.name ?? "Team",
-          colors: t.colors ?? ["#6B7280", "#9CA3AF"],
-        })
-      })
-    })
-
-    // enforce 48
-    return result.slice(0, 48)
-  }, [groupLetters])
-
-  const flagsRowA = useMemo(() => introFlags.slice(0, 24), [introFlags])
-  const flagsRowB = useMemo(() => introFlags.slice(24, 48), [introFlags])
-
-  // center → out delay (2 rows x 24 cols) + tiny jitter so it feels alive
-  const centerOutDelayMs = (row: number, col: number, id: string) => {
-    const centerRow = 0.5
-    const centerCol = 11.5
-    const dist = Math.abs(row - centerRow) + Math.abs(col - centerCol)
-    const jitter = hash01(id) * 70 // 0..70ms
-    return Math.round(dist * 28 + jitter)
-  }
 
   if (!mounted) return null
 
   return (
-    <LayoutGroup>
+    <LayoutGroup id="group-layout">
       <div className="wc-page">
-        {/* INTRO */}
+        {/* ── CAROUSEL INTRO ─────────────────────────────────────────────────
+             12 group cards in a spatial 3D arc. Clicking any card instantly
+             starts the bracket at that group. Cards are the CTA — no hero
+             button needed. The flag scatter has been retired.                 */}
         {!introDone && (
-          <div className={`intro-overlay ${introExiting ? "is-exiting" : ""}`} aria-hidden="true">
-            <div className="intro-inner">
-              <div className={`intro-brand ${introExiting ? "is-fading" : ""}`}>
-                <div className="intro-logo" aria-label="World Cup 2026">
-                <img
-  src="/wc-logo.svg"
-  alt="World Cup 2026"
-  className="intro-logo-img"
-/>
-                </div>
-                <div className="intro-wordmark">Every match decides</div>
-              </div>
+          <div className={`ci-shell ${introExiting ? "is-exiting" : ""}`}>
 
-              <h1 className={`intro-title ${introExiting ? "is-fading" : ""}`}>The FIFA World Cup 2026, decided by you</h1>
-              <p className={`intro-subtitle ${introExiting ? "is-fading" : ""}`}>
-                48 nations, one trophy, infinite stories.
-              </p>
+            {/* 3D card carousel — fills the shell, handles its own perspective */}
+            <HomeCarousel
+              groups={groupLetters.map(letter => ({
+                letter,
+                teams: groupsUI[letter] ?? [],
+              }))}
+              onSelect={handleCarouselSelect}
+            />
 
-              {/* “Wave as a unit” container */}
-              <div className="intro-flags intro-flags--wave">
-                <div className="intro-flags-row row-a">
-                  {flagsRowA.map((team, col) => {
-                    const inDelay = centerOutDelayMs(0, col, `a-${team.id}`)
-                    const floatPhase = Math.round(hash01(`float-${team.id}`) * 900)
-                    return (
-                      <motion.div
-                        key={`intro-a-${team.id}`}
-                        layoutId={`flag-${team.id}`}
-                        className={`flag flag--wavy intro-flag-tile ${introExiting ? "intro-flag-handoff" : ""}`}
-                        style={{
-                          backgroundImage: computeFlagGradient(team.colors),
-                          animationDelay: `${inDelay}ms, ${floatPhase}ms`,
-                        }}
-                        transition={{ type: "spring", stiffness: 260, damping: 28 }}
-                      />
-                    )
-                  })}
-                </div>
+            {/* Editorial copy — pointer-events: none so mouse reaches the cards */}
+            <div className="ci-content ci-content--carousel" aria-hidden="true">
+              {/* bracket26 logo — provided SVG asset, includes the wordmark */}
+              <motion.div
+                className="ci-logo"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/bracket26-logo.svg" alt="bracket26" className="ci-logo-img" />
+              </motion.div>
 
-                <div className="intro-flags-row row-b">
-                  {flagsRowB.map((team, col) => {
-                    const inDelay = centerOutDelayMs(1, col, `b-${team.id}`)
-                    const floatPhase = Math.round(hash01(`float-b-${team.id}`) * 900)
-                    return (
-                      <motion.div
-                        key={`intro-b-${team.id}`}
-                        layoutId={`flag-${team.id}`}
-                        className={`flag flag--wavy intro-flag-tile ${introExiting ? "intro-flag-handoff" : ""}`}
-                        style={{
-                          backgroundImage: computeFlagGradient(team.colors),
-                          animationDelay: `${inDelay}ms, ${floatPhase}ms`,
-                        }}
-                        transition={{ type: "spring", stiffness: 260, damping: 28 }}
-                      />
-                    )
-                  })}
-                </div>
-              </div>
+              <motion.h1
+                className="ci-headline"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.30, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+              >
+                Predict the next champion
+              </motion.h1>
+
+              <motion.p
+                className="ci-subheadline"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.55, duration: 1.0, ease: "easeOut" }}
+              >
+                OF THE FIFA WORLD CUP 2026
+              </motion.p>
             </div>
+
+            {/* Hint — appears after cards are visible */}
+            <motion.p
+              className="ci-hint"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2.0, duration: 1.2, ease: "easeOut" }}
+              aria-hidden="true"
+            >
+              Pick a group to begin
+            </motion.p>
+
+            {/* Disclaimer */}
+            <motion.p
+              className="ci-disclaimer"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2.6, duration: 1.2, ease: "easeOut" }}
+              aria-hidden="true"
+            >
+              Independent fan-made prediction experience. Not affiliated with FIFA.
+            </motion.p>
+
           </div>
         )}
 
@@ -343,28 +320,30 @@ export default function Home() {
             <RitualHeader
               currentStep={currentStep}
               canContinue={
-                currentStep === "groups" 
-                  ? completedGroups === groupLetters.length
-                  : currentStep === "thirdPlace"
+                currentStep === "thirdPlace"
                   ? selectedThirdPlaceGroups.size === 8
-                  : false
+                  : lockedGroupsCount === groupLetters.length
               }
-              showBack={currentStep !== "groups"}
-              onBack={currentStep === "thirdPlace" ? handleBackToGroups : undefined}
-              onContinue={
-                currentStep === "groups"
-                  ? handleContinueFromGroups
-                  : currentStep === "thirdPlace"
-                  ? handleContinueToRound32
+              onHome={handleGoHome}
+              onBack={
+                currentStep === "thirdPlace"
+                  ? handleBackToGroups
+                  : currentStep === "groups"
+                  ? handleGoHome
                   : undefined
               }
-              continueLabel={currentStep === "thirdPlace" ? "To Bracket" : "Continue"}
+              onContinue={
+                currentStep === "thirdPlace"
+                  ? handleContinueToRound32
+                  : handleContinueFromGroups
+              }
+              continueLabel="Continue"
             />
           )}
           
-          <div className="max-w-[1400px] mx-auto">
+          <div className="stage-content-main max-w-[1400px] mx-auto">
             <AnimatePresence mode="wait">
-              {currentStep === "groups" && (
+              {introDone && currentStep === "groups" && (
                 <motion.div
                   key="groups-step"
                   initial={{ opacity: 0 }}
@@ -373,32 +352,25 @@ export default function Home() {
                   transition={{ duration: 0.4 }}
                   className="h-full"
                 >
-                  <GroupStack 
+                  <GroupStack
                     groups={groupLetters.map(letter => ({
                       letter,
                       teams: groupsUI[letter] ?? []
                     }))}
                     onTeamsReorder={handleTeamsReorder}
+                    onLockedGroupsChange={setLockedGroupsCount}
+                    initialGroupLetter={initialGroupLetter}
                   />
-                  
-                  {/* Floating save bar */}
-                  <div className="stack-save-bar-wrapper">
-                    <SaveBar
-                      onSave={handleSave}
-                      progress={{ done: completedGroups, total: groupLetters.length }}
-                      defaultName={savedName}
-                      visible={hasReordered}
-                    />
-                  </div>
                 </motion.div>
               )}
 
-              {currentStep === "thirdPlace" && (
+              {introDone && currentStep === "thirdPlace" && (
                 <motion.div
                   key="third-place-step"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  className="h-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
                   <ThirdPlaceStep

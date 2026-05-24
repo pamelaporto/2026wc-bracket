@@ -8,16 +8,19 @@ type BracketCardProps = {
   match: Match
   onSelectWinner: (matchId: string, winnerId: string) => void
   compact?: boolean
+  round?: number
 }
 
 function TeamSlot({
   team,
   isWinner,
+  isLoser,
   canSelect,
   onSelect,
 }: {
   team: QualifiedTeam | null
   isWinner: boolean
+  isLoser: boolean
   canSelect: boolean
   onSelect: () => void
 }) {
@@ -49,13 +52,9 @@ function TeamSlot({
           <motion.div
             className="bracket-winner-check"
             initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            animate={{ scale: 1, opacity: 0.65 }}
             transition={{ type: "spring", stiffness: 500, damping: 25 }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </motion.div>
+          />
         )}
       </div>
     </>
@@ -72,7 +71,11 @@ function TeamSlot({
   return (
     <button
       type="button"
-      className="bracket-team-slot bracket-team-slot--selectable"
+      className={[
+        "bracket-team-slot",
+        "bracket-team-slot--selectable",
+        isLoser ? "bracket-team-slot--loser" : "",
+      ].filter(Boolean).join(" ")}
       onClick={onSelect}
     >
       {content}
@@ -80,23 +83,38 @@ function TeamSlot({
   )
 }
 
-export function BracketCard({ match, onSelectWinner, compact = false }: BracketCardProps) {
-  const canSelectTeam1 = match.team1 !== null && match.team2 !== null
-  const canSelectTeam2 = match.team1 !== null && match.team2 !== null
+export function BracketCard({ match, onSelectWinner, compact = false, round }: BracketCardProps) {
+  const bothPresent  = match.team1 !== null && match.team2 !== null
+  const needsPick    = bothPresent && match.winner === null
+  const hasWinner    = match.winner !== null
+
+  // A team is the loser when: it exists, the match has a winner, and it isn't the winner
+  const team1IsLoser = hasWinner && match.team1 !== null && match.winner?.id !== match.team1.id
+  const team2IsLoser = hasWinner && match.team2 !== null && match.winner?.id !== match.team2.id
 
   return (
-    <div className={`bracket-card ${compact ? "bracket-card--compact" : ""}`}>
+    <div
+      className={[
+        "bracket-card",
+        compact   ? "bracket-card--compact" : "",
+        needsPick ? "needs-pick"            : "",
+        hasWinner ? "has-winner"            : "",
+      ].filter(Boolean).join(" ")}
+      data-round={round}
+    >
       <TeamSlot
         team={match.team1}
         isWinner={match.winner?.id === match.team1?.id}
-        canSelect={canSelectTeam1 && match.winner?.id !== match.team1?.id}
+        isLoser={team1IsLoser}
+        canSelect={bothPresent && match.winner?.id !== match.team1?.id}
         onSelect={() => match.team1 && onSelectWinner(match.id, match.team1.id)}
       />
       <div className="bracket-vs"><span>vs</span></div>
       <TeamSlot
         team={match.team2}
         isWinner={match.winner?.id === match.team2?.id}
-        canSelect={canSelectTeam2 && match.winner?.id !== match.team2?.id}
+        isLoser={team2IsLoser}
+        canSelect={bothPresent && match.winner?.id !== match.team2?.id}
         onSelect={() => match.team2 && onSelectWinner(match.id, match.team2.id)}
       />
     </div>

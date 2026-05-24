@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "autoPort": true,
+  "configurations": [
+    {
+      "name": "2026-wc-bracket",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/pamela/Documents/2026-wc-bracket && npm run dev"],
+      "port": 3001
+    }
+  ]
+}

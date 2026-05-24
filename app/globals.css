@@ -42,8 +42,9 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* App palette */
-  --bg: #12111b;
-  --bg-2: #181725;
+  --bg-base: #131521;
+  --bg: #131521;
+  --bg-2: #131521;
   --card-surface: #232434;
   --card-surface-2: #25273a;
 
@@ -168,8 +169,7 @@
   color: var(--text);
   padding: 0;
 
-  /* Let stack container handle its own background */
-  background: #08080d;
+  background: var(--bg-base);
 
   font-family: var(--font-jakarta), system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
     "Segoe UI Emoji";
@@ -183,7 +183,7 @@
   overflow: hidden;
 }
 
-.wc-page .page-content > div {
+.stage-content-main {
   min-height: 100vh;
 }
 
@@ -244,541 +244,7 @@
   }
 }
 
-/* =========================================================
-   Group card (glass / frosted like the inspiration)
-   ========================================================= */
-.group-card {
-  position: relative;
-  border-radius: var(--r-lg);
-  /* removed overflow: hidden to allow dropdown to escape card bounds */
-  overflow: hidden;
-    isolation: isolate;              /* keeps pseudo layers contained */
-  transform: translateZ(0);        /* forces GPU layer -> cleaner corners */
-  -webkit-mask-image: -webkit-radial-gradient(white, black); /* fixes blur bleed */
 
-
-  /* Frosted glass surface */
-  background: linear-gradient(180deg, rgba(22, 24, 33, 0.72) 0%, rgba(16, 18, 26, 0.58) 100%);
-
-  /* Glass blur */
-  -webkit-backdrop-filter: blur(18px) saturate(135%);
-  backdrop-filter: blur(18px) saturate(135%);
-
-  /* Edge + depth */
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-/* =========================================================
-   Living Motion System - Dropbox-inspired organic energy
-   ========================================================= */
-
-/* Ambient breathing layer - always on, very slow */
-.card-ambient-layer {
-  position: absolute;
-  inset: -50%;
-  pointer-events: none;
-  z-index: 0;
-  
-  /* Multi-layered gradient that drifts organically */
-  background: 
-    radial-gradient(ellipse 120% 80% at 20% 30%, rgba(45, 212, 191, 0.12), transparent 50%),
-    radial-gradient(ellipse 100% 70% at 80% 70%, rgba(124, 58, 237, 0.14), transparent 50%),
-    radial-gradient(ellipse 90% 60% at 50% 100%, rgba(16, 185, 129, 0.08), transparent 45%);
-  
-  mix-blend-mode: soft-light;
-  opacity: 0.7;
-  
-  /* Slow organic breathing animation - 16s loop */
-  animation: ambientBreathe 16s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
-@keyframes ambientBreathe {
-  0%, 100% {
-    transform: translate(0%, 0%) scale(1) rotate(0deg);
-    opacity: 0.6;
-  }
-  25% {
-    transform: translate(3%, -2%) scale(1.02) rotate(0.5deg);
-    opacity: 0.75;
-  }
-  50% {
-    transform: translate(-2%, 3%) scale(0.98) rotate(-0.3deg);
-    opacity: 0.55;
-  }
-  75% {
-    transform: translate(1%, 1%) scale(1.01) rotate(0.2deg);
-    opacity: 0.7;
-  }
-}
-
-/* Secondary shimmer layer - offset timing for depth */
-.group-card--living::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  
-  background: 
-    linear-gradient(
-      135deg, 
-      transparent 0%, 
-      rgba(255, 255, 255, 0.02) 25%, 
-      transparent 50%,
-      rgba(255, 255, 255, 0.015) 75%,
-      transparent 100%
-    );
-  background-size: 200% 200%;
-  
-  animation: shimmerDrift 20s ease-in-out infinite;
-  will-change: background-position;
-}
-
-@keyframes shimmerDrift {
-  0%, 100% {
-    background-position: 0% 0%;
-  }
-  50% {
-    background-position: 100% 100%;
-  }
-}
-
-/* Cursor-reactive glow layer */
-.card-glow-layer {
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  pointer-events: none;
-  z-index: 2;
-  
-  background: radial-gradient(
-    circle at center,
-    rgba(124, 58, 237, 0.25) 0%,
-    rgba(45, 212, 191, 0.15) 30%,
-    transparent 70%
-  );
-  
-  mix-blend-mode: soft-light;
-  filter: blur(40px);
-  opacity: 0;
-  transform: translate(-50%, -50%);
-  
-  transition: opacity 0.4s ease;
-  will-change: left, top, opacity;
-}
-
-/* Intensify glow on hover */
-.group-card--living.is-hovered .card-glow-layer {
-  opacity: 1;
-}
-
-/* Drag state - edges glow with tension */
-.group-card--living.is-dragging {
-  box-shadow: 
-    0 22px 60px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 40px rgba(124, 58, 237, 0.2),
-    inset 0 0 20px rgba(124, 58, 237, 0.05);
-  border-color: rgba(124, 58, 237, 0.25);
-}
-
-.group-card--living.is-dragging .card-ambient-layer {
-  animation: ambientDragTension 4s ease-in-out infinite;
-  opacity: 0.9;
-}
-
-@keyframes ambientDragTension {
-  0%, 100% {
-    transform: translate(0%, 0%) scale(1.02);
-    opacity: 0.85;
-  }
-  50% {
-    transform: translate(1%, -1%) scale(1.05);
-    opacity: 1;
-  }
-}
-
-/* Lock ripple effect */
-.card-lock-ripple {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100px;
-  height: 100px;
-  pointer-events: none;
-  z-index: 10;
-  transform: translate(-50%, -50%);
-  
-  background: radial-gradient(
-    circle at center,
-    rgba(124, 58, 237, 0.4) 0%,
-    rgba(167, 139, 250, 0.3) 40%,
-    transparent 70%
-  );
-  
-  border-radius: 50%;
-  filter: blur(20px);
-}
-
-/* Lock ripple flash on card */
-.group-card--living.is-lock-ripple {
-  animation: lockFlash 1.2s ease-out;
-}
-
-@keyframes lockFlash {
-  0% {
-    box-shadow: 
-      0 22px 60px rgba(0, 0, 0, 0.55),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      0 0 60px rgba(124, 58, 237, 0.35);
-  }
-  30% {
-    box-shadow: 
-      0 22px 60px rgba(0, 0, 0, 0.55),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 0 80px rgba(167, 139, 250, 0.4);
-  }
-  100% {
-    box-shadow: 
-      0 22px 60px rgba(0, 0, 0, 0.55),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  }
-}
-
-/* Locked state - calm, settled energy */
-.group-card--living.is-locked .card-ambient-layer {
-  animation: ambientLocked 24s ease-in-out infinite;
-  opacity: 0.4;
-}
-
-@keyframes ambientLocked {
-  0%, 100% {
-    transform: translate(0%, 0%) scale(1);
-    opacity: 0.35;
-  }
-  50% {
-    transform: translate(0.5%, 0.5%) scale(1.005);
-    opacity: 0.45;
-  }
-}
-
-/* Hover intensification */
-.group-card--living.is-hovered .card-ambient-layer {
-  animation-duration: 10s;
-  opacity: 0.85;
-}
-
-.group-card--living.is-hovered::before {
-  animation-duration: 12s;
-}
-
-/* Flag parallax on card hover - flags feel responsive */
-.group-card--living.is-hovered .flag {
-  animation: flagParallax 3s ease-in-out infinite;
-}
-
-@keyframes flagParallax {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(1px, -1px) scale(1.02);
-  }
-}
-
-/* Soft glow pulse on card edges - very subtle heartbeat */
-.group-card--living::after {
-  content: "";
-  position: absolute;
-  border-radius: inherit;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-
-  /* Ambient edge glow */
-  box-shadow: inset 0 0 30px rgba(124, 58, 237, 0.03);
-  animation: edgePulse 14s ease-in-out infinite;
-}
-
-@keyframes edgePulse {
-  0%, 100% {
-    box-shadow: inset 0 0 30px rgba(124, 58, 237, 0.02);
-    opacity: 0.6;
-  }
-  50% {
-    box-shadow: inset 0 0 40px rgba(45, 212, 191, 0.04);
-    opacity: 0.8;
-  }
-}
-
-/* Soft “color bleed” like the teal/purple glow in the reference */
-.group-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-
-  background: radial-gradient(900px 260px at 18% -10%, rgba(45, 212, 191, 0.16), transparent 60%),
-    radial-gradient(700px 220px at 85% 0%, rgba(124, 58, 237, 0.18), transparent 62%),
-    radial-gradient(500px 220px at 55% 120%, rgba(0, 0, 0, 0.35), transparent 60%);
-  opacity: 0.9;
-}
-
-/* Subtle texture so it doesn’t look “flat” */
-.group-card:not(.group-card--living)::after {
-  content: "";
-  position: absolute;
-  border-radius: inherit;
-  inset: 0;
-  pointer-events: none;
-
-  /* tiny noise-ish pattern */
-  background-image: repeating-linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.018) 0px,
-    rgba(255, 255, 255, 0.018) 2px,
-    transparent 2px,
-    transparent 6px
-  );
-  mix-blend-mode: overlay;
-  opacity: 0.25;
-}
-
-/* Texture for living cards - on inner element to not conflict with edge pulse ::after */
-.group-card--living .group-card__inner {
-  position: relative;
-}
-
-.group-card--living .group-card__inner::before {
-  content: "";
-  position: absolute;
-  border-radius: inherit;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-
-  /* tiny noise-ish pattern */
-  background-image: repeating-linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.018) 0px,
-    rgba(255, 255, 255, 0.018) 2px,
-    transparent 2px,
-    transparent 6px
-  );
-  mix-blend-mode: overlay;
-  opacity: 0.25;
-}
-
-.group-tab {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 44px;
-  height: 54px;
-  background: var(--purple);
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.92);
-  letter-spacing: 0.04em;
-}
-
-/* =========================================================
-   Lock button (top-right of card header)
-   ========================================================= */
-.lock-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-
-.lock-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.lock-btn.is-locked {
-  background: rgba(124, 58, 237, 0.2);
-  border-color: rgba(124, 58, 237, 0.4);
-  color: rgba(167, 139, 250, 0.95);
-}
-
-.lock-btn.is-locked:hover {
-  background: rgba(124, 58, 237, 0.3);
-  border-color: rgba(124, 58, 237, 0.5);
-}
-
-.lock-icon {
-  width: 12px;
-  height: 12px;
-}
-
-.lock-label {
-  text-transform: uppercase;
-}
-
-/* Toast notification for lock state */
-.lock-toast {
-  position: absolute;
-  top: 50px;
-  right: 12px;
-  z-index: 11;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(10, 12, 16, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
-}
-
-/* Locked card state - dim rows */
-.group-card.is-locked .group-card__inner {
-  opacity: 0.85;
-}
-
-.team-row.row-locked {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.team-row.row-locked .drag-handle {
-  opacity: 0.3 !important;
-  cursor: not-allowed;
-}
-
-.team-row.row-locked:hover {
-  background: transparent;
-}
-
-.team-row.row-locked:hover .drag-handle {
-  opacity: 0.3 !important;
-  background: transparent;
-}
-
-.group-card__inner {
-  padding: 64px 18px 18px;
-  /* added overflow hidden here to clip card contents but not dropdown */
-  overflow: hidden;
-  border-radius: var(--r-lg);
-}
-
-.group-label {
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--faint);
-  margin-bottom: 14px;
-}
-
-/* =========================================================
-   Team rows
-   (grid columns: handle | A1 pill | flag | name)
-   ========================================================= */
-.team-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: 22px 34px 28px 1fr;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 0;
-  border-top: 1px solid var(--line);
-  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
-  /* added z-index for proper stacking when dropdown is open */
-  z-index: 1;
-}
-
-.team-row:first-of-type {
-  border-top: 0;
-}
-
-.team-row:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* Drag handle (shows on hover) */
-.drag-handle {
-  width: 18px;
-  height: 18px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  opacity: 0;
-  transform: translateY(1px);
-  transition: opacity 120ms ease, transform 120ms ease, background 120ms ease;
-}
-
-.drag-icon {
-  width: 16px;
-  height: 16px;
-  color: rgba(255, 255, 255, 0.55);
-}
-
-/* Show on hover/focus */
-.team-row:hover .drag-handle,
-.team-row:focus-within .drag-handle {
-  opacity: 1;
-  transform: translateY(0);
-  background: transparent;
-}
-
-/* Dragging row */
-.team-row.dragging {
-  background: rgba(124, 58, 237, 0.14);
-  box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.45), 0 12px 28px rgba(0, 0, 0, 0.35);
-  transform: scale(1.01);
-  border-radius: 12px;
-  cursor: grabbing;
-}
-
-.team-row.dragging .drag-handle {
-  opacity: 1;
-  background: rgba(124, 58, 237, 0.12);
-}
-
-.team-row.dragging .drag-icon {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.pos-pill {
-  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
-    monospace;
-  width: 34px;
-  height: 22px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.78);
-  font-weight: 800;
-  display: grid;
-  place-items: center;
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  font-variant-numeric: tabular-nums;
-}
 
 .flag {
   width: 24px;
@@ -846,7 +312,7 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.28) inset;
 
   /* Use CSS vars (set inline in page.tsx) so timing is stable + non-robotic */
-  animation: introTileIn 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both, introTileFloat 2400ms ease-in-out infinite;
+  animation: introTileIn 780ms cubic-bezier(0.16, 1, 0.3, 1) both, introTileFloat 2700ms ease-in-out infinite;
 
   animation-delay: var(--inDelayMs, 0ms), var(--floatDelayMs, 0ms);
 }
@@ -896,7 +362,7 @@
 }
 /* Wave as a UNIT (the whole wall moves like fabric) */
 .intro-flags--wave {
-  animation: introWallWave 3200ms ease-in-out infinite;
+  animation: introWallWave 4800ms ease-in-out infinite;
   transform-origin: center;
 }
 
@@ -958,8 +424,8 @@
 .intro-subtitle.is-fading,
 .intro-brand.is-fading {
   opacity: 0;
-  transform: translateY(-6px);
-  transition: opacity 220ms ease, transform 220ms ease;
+  transform: translateY(-8px);
+  transition: opacity 360ms ease, transform 360ms ease;
 }
 
 /* “Waving as a unit”: all flags share same float phase (2nd delay = 0s) */
@@ -990,7 +456,7 @@
 
 /* During exit: fade each tile center-out using the per-tile CSS var */
 .intro-overlay.is-exiting .intro-flag-tile {
-  animation: introTileIn 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
+  animation: introTileIn 780ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
   animation-delay: var(--inDelayMs, 0ms) !important;
 }
 
@@ -1108,32 +574,23 @@
   color: rgba(255, 255, 255, 0.86);
 }
 /* =========================================================
-   Save Bar – minimal, flat charcoal surface, ~1/3 width on desktop
+   Save Bar – glass surface, matches stack card visual language
    ========================================================= */
-.savebar-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 28px;
-}
-
 .savebar {
   display: flex;
   align-items: center;
   gap: 12px;
-  
-  /* ~1/3 screen width on desktop, compact */
-  width: min(480px, 100%);
   padding: 10px 14px;
-  border-radius: 12px;
-  
-  /* Flat charcoal surface */
-  background: #12141a;
-  
-  /* Subtle border + top highlight */
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.02),
-    0 4px 12px rgba(0, 0, 0, 0.3);
+  border-radius: 14px;
+
+  /* Glass surface — same recipe as .stack-card */
+  background: linear-gradient(180deg, rgba(22, 24, 33, 0.9) 0%, rgba(16, 18, 26, 0.82) 100%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
 .savebar-left {
@@ -1144,11 +601,11 @@
 }
 
 .savebar-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
-  background: rgba(251, 146, 60, 0.25);
-  box-shadow: inset 0 0 0 1.5px rgba(251, 146, 60, 0.6);
+  background: rgba(var(--wc-accent-rgb), 0.12);
+  box-shadow: inset 0 0 0 1px rgba(var(--wc-accent-rgb), 0.28);
 }
 
 .savebar-text {
@@ -1169,22 +626,26 @@
   gap: 8px;
   flex: 1;
   min-width: 0;
+  justify-content: flex-end;
 }
 
 .savebar-input {
   flex: 1;
   min-width: 0;
+  max-width: 320px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.9);
   font-size: 13px;
   padding: 6px 10px;
   border-radius: 8px;
+  transition: border-color 0.15s ease;
 }
 
 .savebar-input:focus {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.18);
   outline: none;
+  box-shadow: none;
 }
 
 .savebar-input::placeholder {
@@ -1193,126 +654,65 @@
 
 .savebar-btn {
   flex-shrink: 0;
-  background: rgba(251, 146, 60, 0.15);
-  border: 1px solid rgba(251, 146, 60, 0.3);
-  color: rgba(251, 191, 36, 0.95);
+  background: rgba(var(--wc-accent-rgb), 0.12);
+  border: 1px solid rgba(var(--wc-accent-rgb), 0.3);
+  color: var(--wc-accent);
   font-size: 12px;
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 8px;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .savebar-btn:hover:not(:disabled) {
-  background: rgba(251, 146, 60, 0.22);
-  border-color: rgba(251, 146, 60, 0.4);
+  background: rgba(var(--wc-accent-rgb), 0.2);
+  border-color: rgba(var(--wc-accent-rgb), 0.45);
 }
 
 .savebar-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
-/* Mobile: full width with side padding */
+.savebar-saved-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(var(--wc-accent-rgb), 0.72);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.savebar-edit-btn {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+  font-family: inherit;
+}
+
+.savebar-edit-btn:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+}
+
 @media (max-width: 640px) {
-  .savebar-wrapper {
-    padding: 0 16px;
-  }
   .savebar {
-    width: 100%;
     flex-wrap: wrap;
   }
   .savebar-left {
     width: 100%;
-    margin-bottom: 8px;
-  }
-  .savebar-right {
-    width: 100%;
-  }
-}
-
-.savebar-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 200px;
-}
-
-.savebar-dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: rgba(251, 146, 60, 0.25);
-  box-shadow: 
-    inset 0 0 0 2px rgba(251, 146, 60, 0.5),
-    0 0 12px rgba(251, 146, 60, 0.3),
-    0 6px 16px rgba(0, 0, 0, 0.35);
-  animation: dotPulse 2s ease-in-out infinite;
-}
-
-@keyframes dotPulse {
-  0%, 100% { box-shadow: inset 0 0 0 2px rgba(251, 146, 60, 0.5), 0 0 12px rgba(251, 146, 60, 0.3), 0 6px 16px rgba(0, 0, 0, 0.35); }
-  50% { box-shadow: inset 0 0 0 2px rgba(251, 146, 60, 0.7), 0 0 20px rgba(251, 146, 60, 0.5), 0 6px 16px rgba(0, 0, 0, 0.35); }
-}
-
-.savebar-text {
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 13px;
-  letter-spacing: 0.01em;
-}
-
-.savebar-text strong {
-  color: rgba(251, 191, 36, 0.95);
-}
-
-.savebar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  justify-content: flex-end;
-}
-
-.savebar-input {
-  max-width: 420px;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.savebar-input:focus {
-  border-color: rgba(251, 146, 60, 0.4);
-  box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.1);
-}
-
-.savebar-input::placeholder {
-  color: rgba(255, 255, 255, 0.55);
-}
-
-.savebar-btn {
-  background: rgba(251, 146, 60, 0.2);
-  border: 1px solid rgba(251, 146, 60, 0.35);
-  color: rgba(255, 255, 255, 0.95);
-  font-weight: 600;
-}
-
-.savebar-btn:hover:not(:disabled) {
-  background: rgba(251, 146, 60, 0.3);
-  border-color: rgba(251, 146, 60, 0.5);
-}
-
-.savebar-btn:disabled {
-  opacity: 0.5;
-}
-
-/* Mobile: stack nicely */
-@media (max-width: 640px) {
-  .savebar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .savebar-left {
-    min-width: unset;
   }
   .savebar-right {
     width: 100%;
@@ -1320,97 +720,7 @@
   }
   .savebar-input {
     max-width: none;
-  }
-}
-
-.savebar {
-  pointer-events: auto;
-  width: min(1400px, calc(100% - 56px)); /* matches your max container vibe */
-  margin: 0 auto;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-
-  padding: 12px 14px;
-  border-radius: 16px;
-
-  /* “highlighted” look (teal/green-ish like your inspiration) */
-  background: radial-gradient(120% 180% at 15% 50%, rgba(34, 211, 238, 0.22), transparent 55%),
-    radial-gradient(120% 180% at 85% 40%, rgba(34, 197, 94, 0.18), transparent 55%), rgba(10, 12, 16, 0.72);
-
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-
-  backdrop-filter: blur(10px);
-}
-
-.savebar-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 200px;
-}
-
-.savebar-dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: rgba(34, 197, 94, 0.2);
-  box-shadow: inset 0 0 0 2px rgba(34, 197, 94, 0.45), 0 10px 22px rgba(0, 0, 0, 0.35);
-}
-
-.savebar-text {
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 13px;
-  letter-spacing: 0.01em;
-}
-
-.savebar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  justify-content: flex-end;
-}
-
-.savebar-input {
-  max-width: 420px;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.savebar-input::placeholder {
-  color: rgba(255, 255, 255, 0.55);
-}
-
-.savebar-btn {
-  background: rgba(34, 197, 94, 0.18);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.savebar-btn:hover {
-  background: rgba(34, 197, 94, 0.24);
-}
-
-/* Mobile: stack nicely */
-@media (max-width: 640px) {
-  .savebar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .savebar-left {
-    min-width: unset;
-  }
-  .savebar-right {
-    width: 100%;
-    justify-content: stretch;
-  }
-  .savebar-input {
-    max-width: none;
+    flex: 1;
   }
 }
 
@@ -1478,16 +788,19 @@
 
 .intro-title {
   font-size: clamp(24px, 5vw, 48px);
-  line-height: 1.02;
+  line-height: 1.05;
   font-weight: 900;
-  color: rgba(210, 255, 158, 100);
-  margin: 0 00 40px 0;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.025em;
+  margin: 0 0 40px 0;
 }
 
 .intro-subtitle {
   margin: 0 0 32px 0;
-  font-size: 24px;
-  color: rgba(255, 255, 255, 100);
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 /* Added page-content wrapper styles for stage 2 fade-in */
@@ -1501,6 +814,10 @@
 .page-content.is-visible {
   opacity: 1;
   pointer-events: auto;
+  /* Use transform: none (not translateY(0)) so we don't create a persistent
+     stacking context that would confine position:fixed children (ritual-header,
+     stack-nav) to this element instead of the viewport. */
+  transform: none;
 }
 
 /* ============================
@@ -1541,15 +858,14 @@
   will-change: transform;
   transform-origin: center;
 
-  /* Ensure both animations run continuously during intro */
-  animation: introTileIn 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both, introTileFloat 1800ms ease-in-out infinite;
+  animation: introTileIn 780ms cubic-bezier(0.16, 1, 0.3, 1) both, introTileFloat 2700ms ease-in-out infinite;
 }
 
 /* Corner-to-center cascade exit animation */
 /* During exit: stop the float (so Framer Motion can own transforms),
    but still allow opacity to ease out nicely. */
 .intro-overlay.is-exiting .intro-flag-tile {
-  animation: introTileExit 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
+  animation: introTileExit 780ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
   animation-delay: var(--exitDelay, 0ms) !important;
 }
 
@@ -1877,24 +1193,87 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 3px;                                  /* was 1px — visible breathing room between slots */
   padding: 8px;
   border-radius: var(--r-md);
   background: linear-gradient(180deg, rgba(22, 24, 33, 0.72) 0%, rgba(16, 18, 26, 0.58) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10); /* was 0.08 */
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(12px);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.bracket-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: radial-gradient(600px 150px at 20% -20%, rgba(45, 212, 191, 0.1), transparent 60%),
-    radial-gradient(500px 120px at 80% 0%, rgba(124, 58, 237, 0.12), transparent 60%);
-  opacity: 0.7;
+/* ── Round progression — cards grow heavier as rounds advance ── */
+.bracket-card[data-round="3"] {
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.42);
+}
+.bracket-card[data-round="4"] {
+  border-color: rgba(255, 255, 255, 0.17);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.50);
+  background: linear-gradient(180deg, rgba(25, 27, 38, 0.82) 0%, rgba(18, 20, 30, 0.68) 100%);
+}
+.bracket-card[data-round="5"] {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.58);
+  background: linear-gradient(180deg, rgba(28, 30, 42, 0.90) 0%, rgba(20, 22, 34, 0.76) 100%);
+}
+
+/* ── Needs-pick breathing pulse ── */
+@keyframes needsPickBreathe {
+  0%, 100% { border-color: rgba(255, 255, 255, 0.10); }
+  50%       { border-color: rgba(255, 255, 255, 0.24); }
+}
+
+/* ── Needs-pick state — both teams set, no winner yet ── */
+.bracket-card.needs-pick {
+  animation: needsPickBreathe 3.5s ease-in-out infinite;
+}
+/* Lime-tinted hover on selectable slots when a pick is needed */
+.bracket-card.needs-pick .bracket-team-slot--selectable:hover {
+  background: rgba(var(--wc-accent-rgb), 0.07);
+  border-color: rgba(var(--wc-accent-rgb), 0.22);
+}
+
+/* ── Jump-focus elevation — neutral white border lift, no color, decays over 1.6s ── */
+@keyframes matchFocusPulse {
+  /* brief scale + brightened border: card steps toward the viewer */
+  0%   {
+    transform: scale(1);
+    border-color: rgba(255, 255, 255, 0.10);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  14%  {
+    transform: scale(1.018);
+    border-color: rgba(255, 255, 255, 0.44);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 14px 38px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  }
+  /* settle — elevated but not glowing */
+  42%  {
+    transform: scale(1);
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow:
+      0 10px 30px rgba(0, 0, 0, 0.46);
+  }
+  /* fade back to base */
+  100% {
+    transform: scale(1);
+    border-color: rgba(255, 255, 255, 0.10);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+
+.bk-match-wrap[data-focused="true"] .bracket-card {
+  animation: matchFocusPulse 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  will-change: transform, border-color, box-shadow;
+}
+
+/* ── Has-winner state — dim the loser ── */
+.bracket-card.has-winner .bracket-team-slot--loser {
+  opacity: 0.38;
 }
 
 .bracket-card--compact {
@@ -1945,18 +1324,18 @@
 }
 
 .bracket-team-slot--selectable:hover {
-  background: rgba(34, 211, 238, 0.1);
-  border-color: rgba(34, 211, 238, 0.3);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .bracket-team-slot--selectable:focus-visible {
-  outline: 2px dashed var(--accent-glow);
+  outline: 2px solid rgba(var(--wc-accent-rgb), 0.5);
   outline-offset: 2px;
 }
 
 .bracket-team-slot--winner {
-  background: rgba(34, 211, 238, 0.12);
-  border-color: rgba(34, 211, 238, 0.35);
+  background: rgba(var(--wc-accent-rgb), 0.08);
+  border-color: rgba(var(--wc-accent-rgb), 0.25);
 }
 
 .bracket-team-slot--empty {
@@ -1975,8 +1354,8 @@
   width: 22px;
   height: 16px;
   border-radius: 4px;
-  background: rgba(34, 211, 238, 0.1);
-  border: 1px dashed rgba(34, 211, 238, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
 }
 
@@ -1990,7 +1369,7 @@
 }
 
 .bracket-team-name--empty {
-  color: rgba(34, 211, 238, 0.5);
+  color: rgba(255, 255, 255, 0.25);
   font-style: italic;
 }
 
@@ -2002,27 +1381,49 @@
 }
 
 .bracket-winner-check {
-  display: grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: rgba(34, 211, 238, 0.25);
-  color: var(--accent-glow);
+  background: var(--wc-accent);
+  opacity: 0.65;
+  flex-shrink: 0;
 }
 
 .bracket-vs {
+  position: relative;
   display: flex;
   justify-content: center;
+  align-items: center;
   padding: 2px 0;
 }
+
+/* Hairlines flanking the "vs" text — ──── vs ──── */
+.bracket-vs::before,
+.bracket-vs::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  height: 1px;
+  width: calc(50% - 14px);
+  background: rgba(255, 255, 255, 0.07);
+}
+.bracket-vs::before { left: 4px; }
+.bracket-vs::after  { right: 4px; }
 
 .bracket-vs span {
   font-size: 9px;
   font-weight: 600;
-  color: var(--faint);
+  color: rgba(255, 255, 255, 0.22);
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  position: relative; /* sits above the pseudo hairlines */
+  z-index: 1;
+  background: transparent;
+}
+
+/* Brighten "vs" when a pick is needed */
+.bracket-card.needs-pick .bracket-vs span {
+  color: rgba(255, 255, 255, 0.48);
 }
 
 /* Responsive: fit bracket in viewport on desktop */
@@ -2473,100 +1874,39 @@
   width: 100%;
   height: 100vh;
   min-height: 700px;
-  padding-top: 120px;
   overflow: hidden;
   outline: none;
   box-sizing: border-box;
-  
-  /* Deep navy to near-black base */
-  background: linear-gradient(
-    180deg,
-    #05080e 0%,
-    #080c14 30%,
-    #0a1018 60%,
-    #060a10 100%
-  );
+  background: var(--bg-base);
+
+  /* Flex column: instruction → card → progress in natural flow order */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Top padding clears the fixed nav; bottom gives breathing room */
+  padding: 68px 24px 32px;
 }
 
-/* Primary ambient gradient - large soft center glow */
+/* Stadium layers — stripped to flat */
 .stadium-ambient {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  
-  /* Large soft radial - center brighter, edges darker */
-  background: 
-    radial-gradient(
-      ellipse 100% 80% at 50% 45%,
-      rgba(15, 25, 45, 0.8) 0%,
-      rgba(10, 18, 32, 0.4) 40%,
-      transparent 70%
-    );
-  
-  /* Very slow drift - 30s loop, almost imperceptible */
-  animation: stadiumAmbientDrift 30s ease-in-out infinite;
+  display: none;
 }
 
-@keyframes stadiumAmbientDrift {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(1%, -0.5%) scale(1.02);
-  }
-}
-
-/* Secondary glow layer - adds depth and slight warmth */
 .stadium-glow {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  
-  /* Subtle center brightness with midnight blue */
-  background: 
-    radial-gradient(
-      ellipse 80% 60% at 50% 50%,
-      rgba(20, 35, 60, 0.35) 0%,
-      rgba(12, 20, 35, 0.15) 50%,
-      transparent 80%
-    );
-  
-  /* Very slow breathing - 40s loop */
-  animation: stadiumGlowBreathe 40s ease-in-out infinite;
+  display: none;
 }
 
-@keyframes stadiumGlowBreathe {
-  0%, 100% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 0.85;
-  }
-}
-
-/* Vignette - corners fall into darkness */
+/* Vignette — removed; flat black needs no corner darkening */
 .stadium-vignette {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-  
-  /* Stronger darkness at corners and edges */
-  background: 
-    radial-gradient(
-      ellipse 75% 65% at 50% 50%,
-      transparent 20%,
-      rgba(5, 8, 14, 0.5) 70%,
-      rgba(3, 5, 10, 0.85) 100%
-    );
+  display: none;
 }
 
 /* Navigation */
 .stack-nav {
   position: fixed;
-  right: 32px;
+  /* Anchored to the right edge of the centered card (card max-width 420px → half = 210px + 22px gap) */
+  left: calc(50% + 232px);
   top: 50%;
   transform: translateY(-50%);
   z-index: 100;
@@ -2614,6 +1954,7 @@
 }
 
 .stack-nav-dot {
+  position: relative;
   width: 32px;
   height: 24px;
   font-family: inherit;
@@ -2625,8 +1966,9 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.25s ease;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .stack-nav-dot:hover {
@@ -2636,46 +1978,48 @@
 }
 
 .stack-nav-dot.is-active {
-  background: rgba(var(--wc-accent-rgb), 0.25);
-  border-color: rgba(var(--wc-accent-rgb), 0.6);
-  color: #fff;
+  background: rgba(var(--wc-accent-rgb), 0.10);
+  border-color: rgba(var(--wc-accent-rgb), 0.28);
+  color: var(--wc-accent);
   transform: scale(1.1);
 }
 
 .stack-nav-dot-label {
   font-family: var(--font-mono), monospace;
 }
-/* COMPLETION BADGE */
+/* COMPLETION STATE — subtle tint + restrained dot */
+.stack-nav-dot.is-locked {
+  background: rgba(var(--wc-accent-rgb), 0.06);
+  border-color: rgba(var(--wc-accent-rgb), 0.22);
+  color: rgba(255, 255, 255, 0.65);
+}
+
 .stack-nav-dot.is-locked::after {
   content: "";
   position: absolute;
-
-  right: -8px;
-  top: -8px;
-
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-
-  background: #B1F712;
-  box-shadow:
-    0 0 12px rgba(177,247,18,.8),
-    0 0 28px rgba(177,247,18,.45);
-
-  border: 1px solid rgba(5,10,20,0.95); /* creates cutout effect */
+  right: -2px;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--wc-accent);
+  border: 1px solid rgba(5, 10, 20, 0.9);
+  opacity: 0.7;
 }
 
-/* The totem stack */
+/* The totem stack — in-flow flex child with explicit height so absolute
+   cards inside have a sizing context. Cards animate via y transforms. */
 .stack-totem {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   width: 100%;
   max-width: 420px;
-  height: 100%;
+  /* 340px safely contains the active card (72px tab area + 4 rows + padding) */
+  height: 340px;
+  flex-shrink: 0;
   z-index: 10;
-  
+
+  /* Flex centers the static position of absolute children,
+     so cards at y:0 appear vertically and horizontally centered */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2686,19 +2030,20 @@
   position: absolute;
   width: 100%;
   max-width: 400px;
+  min-height: 200px;
   border-radius: 24px;
   overflow: hidden;
-  
+
   /* Glass surface */
   background: linear-gradient(180deg, rgba(22, 24, 33, 0.85) 0%, rgba(16, 18, 26, 0.75) 100%);
   backdrop-filter: blur(24px) saturate(140%);
-  
+
   /* Edge definition */
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    0 30px 80px rgba(0, 0, 0, 0.6),
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  
+
   will-change: transform, opacity, filter;
 }
 
@@ -2715,36 +2060,38 @@
     radial-gradient(ellipse 100% 60% at 70% 80%, rgba(15, 30, 60, 0.3), transparent 50%);
   
   mix-blend-mode: soft-light;
-  opacity: 0.5;
+  opacity: 0.2;
   animation: stackCardBreathe 20s ease-in-out infinite;
 }
 
 @keyframes stackCardBreathe {
   0%, 100% {
     transform: translate(0, 0) scale(1);
-    opacity: 0.6;
+    opacity: 0.2;
   }
   50% {
     transform: translate(2%, -2%) scale(1.03);
-    opacity: 0.8;
+    opacity: 0.3;
   }
 }
 
-/* Edge glow - subtle static */
+/* Edge glow - only active/selected states; none by default */
 .stack-card-edge-glow {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
   z-index: 1;
-  box-shadow: 0 0 20px rgba(var(--wc-accent-rgb), 0.08);
+  box-shadow: none;
   transition: box-shadow 0.5s ease;
 }
 
 /* Active card enhancements */
 .stack-card.is-active {
-  box-shadow: 
-    0 40px 100px rgba(0, 0, 0, 0.65),
+  background: linear-gradient(180deg, rgba(28, 32, 46, 0.92) 0%, rgba(20, 24, 36, 0.84) 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.55),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
@@ -2754,36 +2101,107 @@
 }
 
 .stack-card.is-active .stack-card-edge-glow {
-  box-shadow: 0 0 40px rgba(var(--wc-accent-rgb), 0.15), inset 0 0 20px rgba(var(--wc-accent-rgb), 0.05);
+  /* Neutral white inner edge — no lime tint on card border */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
 }
 
-/* Group letter tab - orbital blue theme */
+/* Selected card (Third-Place) */
+.stack-card.is-selected {
+  border-color: rgba(var(--wc-accent-rgb), 0.22);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.stack-card.is-selected .stack-card-ambient {
+  animation-duration: 14s;
+  opacity: 0.65;
+}
+
+.stack-card.is-selected .stack-card-edge-glow {
+  box-shadow: inset 0 0 0 1px rgba(var(--wc-accent-rgb), 0.15);
+}
+
+/* ── Small preview — 188 × 260px for the homepage fan deck ──────────────────
+   Overrides dimensions and spacing while keeping the identical visual surface:
+   same background, border, shadow, ambient layer, edge glow, and tab colour.
+   No drag-handle column — preview rows use a 3-col grid.                    */
+.stack-card.stack-card--sm {
+  width:      188px;
+  height:     260px;
+  max-width:  none;
+  min-height: none;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.stack-card--sm .stack-card-tab {
+  width:                      44px;
+  height:                     50px;
+  font-size:                  15px;
+  border-bottom-left-radius:  10px;
+  border-bottom-right-radius: 10px;
+}
+
+.stack-card--sm .stack-card-inner {
+  padding: 58px 14px 14px;
+}
+
+.stack-card--sm .stack-card-label {
+  font-size:     10px;
+  margin-bottom: 10px;
+}
+
+/* No drag-handle column in preview — 3-col grid: pos · flag · name */
+.stack-card--sm .stack-team-row {
+  grid-template-columns: 32px 22px 1fr;
+  gap:     7px;
+  padding: 8px 0;
+}
+
+.stack-card--sm .stack-pos-pill {
+  width:         32px;
+  height:        20px;
+  font-size:     10px;
+  border-radius: 6px;
+}
+
+.stack-card--sm .stack-flag {
+  width:         22px;
+  height:        15px;
+  border-radius: 4px;
+}
+
+.stack-card--sm .stack-team-name {
+  font-size:      11px;
+  font-weight:    500;
+  white-space:    nowrap;
+  overflow:       hidden;
+  text-overflow:  ellipsis;
+}
+
+/* Group letter tab — bold solid lime badge, pure black text */
 .stack-card-tab {
   position: absolute;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 52px;
-  height: 60px;
-  background: linear-gradient(180deg, rgba(var(--wc-accent-rgb), 0.85), rgba(var(--wc-accent-rgb), 0.7));
-  border-bottom-left-radius: 14px;
-  border-bottom-right-radius: 14px;
+  height: 56px;
+  background: #98D523;
+  border: none;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
   display: grid;
   place-items: center;
   font-weight: 800;
-  font-size: 20px;
-  color: rgba(10, 15, 5, 0.95);
+  font-size: 18px;
+  color: #000000;
   letter-spacing: 0.04em;
   z-index: 5;
-  box-shadow: 0 8px 24px rgba(var(--wc-accent-rgb), 0.25);
 }
 
 /* Lock button */
 .stack-lock-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 10;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -2807,9 +2225,63 @@
 }
 
 .stack-lock-btn.is-locked {
-  background: rgba(var(--wc-accent-rgb), 0.2);
-  border-color: rgba(var(--wc-accent-rgb), 0.5);
+  background: rgba(var(--wc-accent-rgb), 0.08);
+  border-color: rgba(var(--wc-accent-rgb), 0.25);
   color: var(--wc-accent);
+}
+
+.stack-lock-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Lock slot — wraps button + tooltip together */
+.stack-lock-slot {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* First-time tooltip */
+.stack-lock-tooltip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 12px;
+  border-radius: 8px;
+  background: rgba(16, 17, 28, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(10px);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.stack-lock-tooltip-close {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s ease;
+}
+
+.stack-lock-tooltip-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Card inner content */
@@ -2858,15 +2330,16 @@
 }
 
 .stack-team-row.is-dragging {
-  background: rgba(var(--wc-accent-rgb), 0.1);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
-  box-shadow: inset 0 0 0 1px rgba(var(--wc-accent-rgb), 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .stack-drag-handle {
-  opacity: 0;
+  opacity: 0.25;
   transition: opacity 0.15s ease;
   cursor: grab;
+  flex-shrink: 0;
 }
 
 .stack-team-row:hover .stack-drag-handle {
@@ -2874,8 +2347,38 @@
 }
 
 .stack-team-row.is-locked .stack-drag-handle {
-  opacity: 0.2;
+  opacity: 0.15;
   cursor: not-allowed;
+}
+
+/* Row drag cursor */
+.stack-team-row[draggable="true"] {
+  cursor: grab;
+}
+.stack-team-row[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* Click-to-drag teach wiggle */
+@keyframes rowClickWiggle {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-6px); }
+  50%  { transform: translateX(4px); }
+  75%  { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+.stack-team-row.is-click-hint {
+  animation: rowClickWiggle 0.42s ease;
+}
+
+/* Inactivity nudge — pulses grip on first row */
+@keyframes gripNudgePulse {
+  0%, 100% { opacity: 0.25; }
+  40%      { opacity: 1; transform: translateY(-2px); }
+  70%      { opacity: 1; transform: translateY(2px); }
+}
+.stack-team-row.is-nudge .stack-drag-handle {
+  animation: gripNudgePulse 0.75s ease 3;
 }
 
 .stack-pos-pill {
@@ -2900,6 +2403,198 @@
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
   background-size: cover;
   background-position: center;
+}
+
+/* Third-place card flag — prominent but same material language as .stack-flag */
+.tp-stack-flag {
+  width: 44px;
+  height: 33px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+/* Selected overlay */
+.tp-stack-selected-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(var(--wc-accent-rgb), 0.06) 0%, transparent 50%);
+}
+
+/* Third-place card inner — same top padding as Group Stage */
+.tp-stack-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 72px !important;
+  padding-bottom: 28px !important;
+}
+
+/* Label override for TP — tighter margin below */
+.tp-stack-card-inner .stack-card-label {
+  margin-bottom: 10px;
+}
+
+/* Separator between label and team hero */
+.tp-stack-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 0 0 16px;
+  flex-shrink: 0;
+}
+
+.tp-stack-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.tp-stack-team-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.tp-stack-rank {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.tp-stack-rank-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.tp-stack-rank-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--wc-accent);
+  font-family: var(--font-mono), monospace;
+  letter-spacing: -0.01em;
+}
+
+.tp-stack-counter {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 14px 24px;
+  border-radius: 12px;
+  background: rgba(10, 15, 25, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+}
+
+.tp-stack-counter-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: -0.01em;
+}
+
+.tp-stack-counter-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.01em;
+}
+
+/* ── Third-Place Selection Rail ──────────────────────────────────
+   Replaces the plain text counter. 8 chip slots sit below the card:
+   filled slots show the flag gradient + group letter; empty slots
+   are faint ghost outlines communicating the remaining picks.      */
+.tp-selection-rail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  position: relative;
+  z-index: 20;
+}
+
+.tp-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Base chip */
+.tp-selection-chip {
+  width: 32px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+/* Filled chip — flag gradient background, clickable */
+.tp-selection-chip--filled {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+}
+.tp-selection-chip--filled:hover {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.tp-selection-chip--filled:active {
+  transform: scale(0.95);
+}
+
+/* Group letter overlay on filled chip */
+.tp-chip-letter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono), monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+/* Empty ghost slot */
+.tp-selection-chip--empty {
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Fractional counter label to the right of chips */
+.tp-chips-count {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.22);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.tp-chips-count--complete {
+  color: rgba(var(--wc-accent-rgb), 0.6);
 }
 
 .stack-team-name {
@@ -2940,12 +2635,12 @@
 }
 
 .stack-menu {
-  background: rgba(10, 18, 32, 0.98);
-  border: 1px solid rgba(var(--wc-accent-rgb), 0.12);
+  background: rgba(16, 17, 28, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 8px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
 }
 
 .stack-menu-item {
@@ -3006,7 +2701,7 @@
 /* Floating save bar for stack view */
 .stack-save-bar-wrapper {
   position: fixed;
-  top: 24px;
+  bottom: 32px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 200;
@@ -3017,6 +2712,7 @@
 /* Responsive */
 @media (max-width: 768px) {
   .stack-nav {
+    left: auto;
     right: 16px;
   }
   
@@ -3071,16 +2767,10 @@
   right: 0;
   z-index: 500;
   padding: 0 24px;
-  
-  /* Glass panel */
-  background: linear-gradient(
-    180deg,
-    rgba(8, 12, 20, 0.92) 0%,
-    rgba(8, 12, 20, 0.85) 70%,
-    rgba(8, 12, 20, 0) 100%
-  );
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(19, 21, 33, 0.88);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .ritual-header__inner {
@@ -3089,7 +2779,7 @@
   justify-content: space-between;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px 0 24px;
+  padding: 13px 0;
   gap: 24px;
 }
 
@@ -3098,21 +2788,28 @@
 .ritual-header__right {
   flex: 0 0 160px;
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 .ritual-header__left {
-  justify-content: flex-start;
+  align-items: center;
+  flex-direction: row;
+  gap: 8px;
 }
 
+/* Right section expands to fit email form or status */
 .ritual-header__right {
-  justify-content: flex-end;
+  flex: 0 0 auto;
+  min-width: 160px;
+  gap: 6px;
 }
 
 /* Center titles */
 .ritual-header__center {
   flex: 1;
   text-align: center;
-  min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3122,29 +2819,66 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .ritual-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.95);
-  letter-spacing: -0.02em;
+  font-size: 17px;
+  font-weight: 600;
   line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
-.ritual-context {
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.ritual-title-step {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 700;
+}
+
+.ritual-title-sep {
+  color: rgba(255, 255, 255, 0.25);
+  font-weight: 400;
+}
+
+.ritual-title-series {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
 }
 
 .ritual-instruction {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.42);
+  margin-top: 1px;
+  letter-spacing: 0.01em;
+}
+
+/* Logo button — left slot of ritual header */
+.ritual-logo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px;
+  transition: background 0.18s ease, opacity 0.18s ease;
+}
+
+.ritual-logo-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ritual-logo-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.ritual-logo-img {
+  height: 26px;
+  width: auto;
+  display: block;
 }
 
 /* Navigation buttons */
@@ -3159,10 +2893,13 @@
   color: rgba(255, 255, 255, 0.5);
   font-size: 13px;
   font-weight: 500;
+  font-family: inherit;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .ritual-nav-btn:hover {
@@ -3203,15 +2940,63 @@
 }
 
 .ritual-nav-btn--continue.is-enabled {
-  border-color: rgba(var(--wc-accent-rgb), 0.45);
-  background: rgba(var(--wc-accent-rgb), 0.15);
-  color: var(--wc-accent);
+  border-color: transparent;
+  background: var(--wc-accent);
+  color: #0a0f00;
 }
 
 .ritual-nav-btn--continue.is-enabled:hover {
-  border-color: rgba(var(--wc-accent-rgb), 0.65);
-  background: rgba(var(--wc-accent-rgb), 0.25);
-  color: var(--wc-accent);
+  border-color: transparent;
+  background: var(--wc-accent);
+  color: #0a0f00;
+  opacity: 0.88;
+}
+
+/* Two-line instructional copy above the active card (Groups + Third-Place) */
+/* position: absolute so it floats above the card stack without displacing the container */
+.stage-instruction {
+  /* In-flow: sits above the totem in the flex column */
+  position: relative;
+  width: 90%;
+  max-width: 420px;
+  text-align: center;
+  z-index: 150;
+  pointer-events: none;
+  margin-bottom: 20px;
+}
+
+.stage-instruction-headline {
+  font-family: inherit;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.stage-instruction-sub {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.48);
+  margin-top: 3px;
+}
+
+/* Progress / selection counter — in-flow, sits below the totem */
+.stack-progress-counter {
+  position: relative;
+  z-index: 20;
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+  margin-top: 14px;
 }
 
 /* Glow effect */
@@ -3235,39 +3020,6 @@
   }
 }
 
-/* Progress indicator */
-.ritual-progress {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  padding-bottom: 8px;
-}
-
-.ritual-progress-track {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ritual-progress-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  transition: all 0.3s ease;
-}
-
-.ritual-progress-dot.is-complete {
-  background: rgba(var(--wc-accent-rgb), 0.5);
-}
-
-.ritual-progress-dot.is-current {
-  width: 24px;
-  border-radius: 3px;
-  background: rgba(var(--wc-accent-rgb), 0.7);
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .ritual-header {
@@ -3275,7 +3027,7 @@
   }
   
   .ritual-header__inner {
-    padding: 16px 0 20px;
+    padding: 12px 0;
     gap: 12px;
   }
   
@@ -3293,31 +3045,22 @@
   }
   
   .ritual-title {
-    font-size: 16px;
+    font-size: 14px;
   }
-  
-  .ritual-context {
-    font-size: 10px;
-  }
-  
+
   .ritual-instruction {
     font-size: 11px;
   }
-  .ritual-header__center{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
+
+  .ritual-header__center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   
-  .ritual-logo{
-    margin-bottom:14px;
-  }
-  
-  .ritual-logo-img{
-    width:64px;
-    height:auto;
-    display:block;
-    filter:drop-shadow(0 0 28px rgba(177,247,18,0.18));
+  .ritual-logo-img {
+    height: 22px;
+    width: auto;
   }
 }
 /* ===== LOCK BUTTON FIX ===== */
@@ -3359,4 +3102,947 @@
 .lock-label{
   display: block;
   width: 100%;
+}
+
+/* ════════════════════════════════════════════════════════════
+   WRAPPED EXPERIENCE
+   ════════════════════════════════════════════════════════════ */
+
+/* Shell — full-screen, same base as the rest of the app */
+.wr-shell {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-base);
+  overflow: hidden;
+}
+
+.wr-step {
+  position: absolute;
+  inset: 0;
+}
+
+/* Common screen layout */
+.wr-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.wr-screen-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+  padding: 40px 28px;
+  max-width: 480px;
+  width: 100%;
+}
+
+/* ── Shared: continue button ────────────────────────────────── */
+.wr-continue-btn {
+  margin-top: 8px;
+  padding: 13px 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background 0.2s, border-color 0.2s;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.wr-continue-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Name Gate ──────────────────────────────────────────────── */
+.wr-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.wr-gate-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 40px 28px;
+  max-width: 420px;
+  width: 100%;
+}
+
+/* ── GenAI titles — sentence case (global rule for all AI-generated titles) ── */
+.wr-personality-archetype,
+.wr-card-archetype {
+  text-transform: lowercase;
+}
+.wr-personality-archetype::first-letter,
+.wr-card-archetype::first-letter {
+  text-transform: uppercase;
+}
+
+.wr-gate-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--wc-accent);
+  font-weight: 700;
+}
+
+.wr-gate-title {
+  font-size: clamp(26px, 6vw, 38px);
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 4px 0;
+}
+
+.wr-gate-hint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.38);
+  margin-bottom: 8px;
+}
+
+.wr-gate-field {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.wr-gate-input {
+  flex: 1;
+  padding: 13px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.wr-gate-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+.wr-gate-input:focus {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.wr-gate-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 13px 20px;
+  border-radius: 10px;
+  background: var(--wc-accent);
+  border: none;
+  color: #0a0f00;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.wr-gate-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.wr-gate-btn:not(:disabled):hover {
+  opacity: 0.9;
+}
+
+/* ── Opening ────────────────────────────────────────────────── */
+.wr-opening {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.wr-opening-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  filter: blur(60px) saturate(1.5);
+  transform: scale(1.4);
+}
+
+.wr-opening-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 30%, var(--bg-base) 80%);
+}
+
+.wr-opening-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 40px 28px;
+}
+
+.wr-opening-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--wc-accent);
+  font-weight: 700;
+}
+
+.wr-opening-title {
+  font-size: clamp(48px, 11vw, 80px);
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.97);
+  letter-spacing: -0.04em;
+  line-height: 1.0;
+  margin: 8px 0 4px;
+}
+
+.wr-opening-sub {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.02em;
+  margin-top: 4px;
+}
+
+.wr-opening-skip {
+  margin-top: 32px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── Champion Reveal ────────────────────────────────────────── */
+.wr-champion {
+  flex-direction: column;
+}
+
+.wr-champion-ambient {
+  position: absolute;
+  inset: -20%;
+  opacity: 0.18;
+  filter: blur(80px) saturate(2);
+  pointer-events: none;
+}
+
+.wr-champion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(177, 247, 18, 0.25);
+  background: rgba(177, 247, 18, 0.07);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--wc-accent);
+}
+
+.wr-champion-flag {
+  width: 120px;
+  height: 82px;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.wr-champion-name {
+  font-size: clamp(32px, 8vw, 56px);
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.97);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.wr-champion-final {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.38);
+  letter-spacing: 0.01em;
+}
+
+/* ── Headline ───────────────────────────────────────────────── */
+.wr-headline {
+  flex-direction: column;
+}
+
+.wr-headline-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 700;
+}
+
+.wr-headline-text {
+  font-size: clamp(24px, 5.5vw, 38px);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.93);
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  max-width: 420px;
+}
+
+.wr-headline-word {
+  display: inline;
+}
+
+/* ── Personality ────────────────────────────────────────────── */
+.wr-personality {
+  flex-direction: column;
+}
+
+.wr-personality-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 700;
+}
+
+.wr-personality-archetype {
+  font-size: clamp(36px, 8vw, 56px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.wr-personality-tagline {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.5;
+  max-width: 340px;
+}
+
+/* Volatility bar */
+.wr-volatility {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.wr-volatility-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  white-space: nowrap;
+}
+
+.wr-volatility-dots {
+  display: flex;
+  gap: 7px;
+}
+
+.wr-volatility-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.wr-volatility-hint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.32);
+  white-space: nowrap;
+}
+
+/* ── Insights ───────────────────────────────────────────────── */
+.wr-insights {
+  flex-direction: column;
+}
+
+.wr-insights-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 700;
+}
+
+.wr-insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 440px;
+}
+
+.wr-insight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  text-align: left;
+}
+
+.wr-insight-number {
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--font-mono), monospace;
+  color: var(--wc-accent);
+  letter-spacing: 0.05em;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+.wr-insight-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wr-insight-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+  letter-spacing: -0.01em;
+}
+
+.wr-insight-caption {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.42);
+  line-height: 1.5;
+}
+
+/* ── Share Card ─────────────────────────────────────────────── */
+.wr-share {
+  flex-direction: column;
+}
+
+.wr-share-inner {
+  gap: 24px;
+  padding: 20px 20px 40px;
+  max-width: 400px;
+}
+
+.wr-card {
+  width: 100%;
+  border-radius: 20px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.wr-card-header {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.wr-card-eyebrow {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.wr-card-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: -0.03em;
+}
+
+.wr-card-logo {
+  display: block;
+  width: 35px;
+  height: auto;
+  opacity: 0.9;
+}
+
+.wr-card-champion {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+}
+
+.wr-card-flag {
+  width: 64px;
+  height: 44px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.wr-card-champion-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.wr-card-champion-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--wc-accent);
+}
+
+.wr-card-champion-name {
+  font-size: 22px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.wr-card-champion-final {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.wr-card-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 0 20px;
+}
+
+.wr-card-personality {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.wr-card-archetype {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.02em;
+}
+
+.wr-card-headline {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.45;
+}
+
+.wr-card-stats {
+  display: flex;
+  padding: 14px 20px;
+  gap: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wr-card-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.wr-card-stat + .wr-card-stat {
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wr-card-stat-value {
+  font-size: 22px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.88);
+  letter-spacing: -0.02em;
+  font-family: var(--font-mono), monospace;
+}
+
+.wr-card-stat-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.wr-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wr-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.01em;
+}
+
+/* Share actions */
+.wr-share-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.wr-share-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--wc-accent);
+  border: none;
+  color: #0a0f00;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.wr-share-btn:hover { opacity: 0.9; }
+
+.wr-replay-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.wr-replay-btn:hover { color: rgba(255, 255, 255, 0.55); }
+
+/* ── Mobile adjustments ─────────────────────────────────────── */
+@media (max-width: 480px) {
+  .wr-card-stats {
+    padding: 12px 16px;
+  }
+  .wr-card-stat-value {
+    font-size: 18px;
+  }
+  .wr-champion-flag {
+    width: 96px;
+    height: 66px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   CINEMATIC INTRO
+   Layered composition: ambient → flag texture → editorial content
+   ════════════════════════════════════════════════════════════ */
+
+/* Shell — full-screen, fixed over everything */
+.ci-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--bg-base);
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 700ms ease 80ms;
+  pointer-events: all;
+}
+
+.ci-shell.is-exiting {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* No ambient layer — background is pure deep navy, no color cast */
+
+/* ── Content column — floats above the flag field via z-index ────────
+   inset: 0 fills the shell. padding-bottom shifts the stack slightly
+   above center so the CTA has clear air above the densest flags.
+   Flag nodes at the same vertical position are invisible behind it.   */
+.ci-content {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 24px clamp(80px, 22vh, 180px);
+  gap: 0;
+  user-select: none;
+}
+
+/* ── Homepage logo (bracket26-logo.svg) ──────────────────────
+   Centered above the headline. SVG includes the wordmark,
+   no extra text element needed.                               */
+.ci-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.ci-logo-img {
+  width: 77px;
+  height: auto;
+  display: block;
+}
+
+/* ── Homepage brand mark (legacy, kept for CSS safety) ───────*/
+.ci-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.ci-brand-logo {
+  width: 52px;
+  height: 52px;
+  display: block;
+  object-fit: contain;
+}
+
+.ci-brand-wordmark {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ── Tournament label — replaces the badge ───────────────────*/
+.ci-tournament-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(var(--wc-accent-rgb), 0.60);
+  margin-bottom: 22px;
+}
+
+/* ── Primary headline — off-white ────────────────────────── */
+.ci-headline {
+  font-size: clamp(32px, 5.2vw, 66px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  color: #F5FFF1;
+  margin: 0 0 12px;
+  max-width: 900px;
+}
+
+/* Subheadline below the main headline ("OF THE FIFA WORLD CUP 2026") */
+.ci-subheadline {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+}
+
+/* Legacy copy class — kept for safety, no longer rendered */
+.ci-copy {
+  font-size: clamp(14px, 1.8vw, 18px);
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.01em;
+  margin: 0 0 36px;
+}
+
+/* ── Flag field — atmospheric scatter, 4 depth layers ────────
+   Covers the lower 70% of the screen. Nodes are absolutely
+   positioned within this container — no rows, no grid.
+   Top-fade mask dissolves distant nodes into the background
+   so there's no visible edge where the field begins.          */
+.ci-flag-field {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 70%;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent     0%,
+    rgba(0,0,0,0.2) 10%,
+    rgba(0,0,0,0.6) 24%,
+    black           42%,
+    black          100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent     0%,
+    rgba(0,0,0,0.2) 10%,
+    rgba(0,0,0,0.6) 24%,
+    black           42%,
+    black          100%
+  );
+}
+
+/* Individual flag node — no border, purely atmospheric ──────
+   Blur, opacity, and size are all set inline per node.
+   animation-name is also set inline, selecting the depth
+   variant that matches the node's blur level.               */
+.ci-flag-node {
+  position: absolute;
+  background-size: cover;
+  background-position: center;
+  /* No border — flags are atmospheric, not UI elements */
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  will-change: transform;
+}
+
+/* Horizontal-only drift animations — 4 amplitudes for depth parallax.
+   All alternate (drift left → drift back) for seamless looping.
+   Near flags drift more (22px) than distant flags (8px), reinforcing
+   the sense that near objects move faster past a fixed camera.         */
+@keyframes ci-drift-distant { from { transform: translateX(0); } to { transform: translateX(-8px);  } }
+@keyframes ci-drift-bg      { from { transform: translateX(0); } to { transform: translateX(-12px); } }
+@keyframes ci-drift-mid     { from { transform: translateX(0); } to { transform: translateX(-17px); } }
+@keyframes ci-drift-near    { from { transform: translateX(0); } to { transform: translateX(-24px); } }
+
+/* ── CTA ─────────────────────────────────────────────────────*/
+.ci-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--wc-accent-rgb), 0.30);
+  background: rgba(var(--wc-accent-rgb), 0.07);
+  color: var(--wc-accent);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.ci-cta:hover {
+  background: rgba(var(--wc-accent-rgb), 0.13);
+  border-color: rgba(var(--wc-accent-rgb), 0.45);
+}
+
+/* ── Disclaimer — sits at the very bottom of the shell ─────*/
+.ci-disclaimer {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+  padding: 0 24px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   HOME CAROUSEL — FAN DECK POSITIONING
+   Visual surface comes entirely from .stack-card + .stack-card--sm.
+   Only fan-layout geometry lives here — no duplicated visual styles.
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Content overlay — editorial copy above the fan ─────────
+   pointer-events: none lets mouse reach the cards behind.     */
+.ci-content--carousel {
+  justify-content: flex-start;
+  padding-top:    clamp(36px, 7.5vh, 80px);
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+/* Hint — appears after cards are visible */
+.ci-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(32px, 6vh, 60px);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.30);
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
+/* ── Scene ───────────────────────────────────────────────────*/
+.hc-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: visible;
+}
+
+/* ── Card positioning — visual comes entirely from .stack-card ─
+   .hc-card handles ONLY the fan placement; all surface styles
+   (background, border, shadow, ambient, glow, border-radius,
+   overflow) come from .stack-card and .stack-card--sm.        */
+.hc-card {
+  top:         58%;
+  left:        50%;
+  margin-top:  -130px;
+  margin-left: -94px;
+}
+
+/* Selected state — inherits .stack-card.is-active border (rgba(255,255,255,0.12))
+   No override here; border matches the Group Stage active card exactly. */
+
+/* ── Mobile ──────────────────────────────────────────────────*/
+@media (max-width: 600px) {
+  .ci-tournament-label { font-size: 10px; letter-spacing: 0.22em; margin-bottom: 16px; }
+  .ci-headline         { font-size: clamp(26px, 8vw, 42px); margin-bottom: 14px; }
+  .ci-copy             { margin-bottom: 28px; }
+  .ci-disclaimer       { font-size: 9px; bottom: 14px; }
+  .hc-scene            { transform: scale(0.68); transform-origin: 50% 58%; }
 }

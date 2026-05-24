@@ -1,53 +1,55 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowRight, ArrowLeft } from "lucide-react"
 
 export type RitualStep = "groups" | "thirdPlace" | "bracket" | "wrap"
 
 interface StepContent {
-  title: string
-  context: string
-  instruction: string
+  step: string
+  series: string
 }
 
-const STEP_CONTENT: Record<RitualStep, StepContent> =  {
+const STEP_CONTENT: Record<RitualStep, StepContent> = {
   groups: {
-    
-    title: "FIFA World Cup 2026 · Group stage begins ",
-    instruction: "Drag teams to shape your groups. Lock when you believe.",
+    step: "Group stage",
+    series: "FIFA World Cup 2026",
   },
   thirdPlace: {
-    title: "FIFA World Cup 2026 · Third-place selection",
-    instruction: "Select 8 third-place teams to advance to the knockout rounds.",
+    step: "Best third-place teams",
+    series: "FIFA World Cup 2026",
   },
   bracket: {
-    title: "FIFA World Cup 2026 · Knockout stage",
-    instruction: "Pick your winners. The path to the final awaits.",
+    step: "Knockout",
+    series: "FIFA World Cup 2026",
   },
   wrap: {
-    title: "Your Prophecy Complete",
-    context: "World Cup 2026 · Final Prediction",
-    instruction: "Review your complete bracket and share your vision.",
+    step: "Your prophecy complete",
+    series: "World Cup 2026",
   },
 }
 
 interface RitualHeaderProps {
   currentStep: RitualStep
   canContinue: boolean
+  /** Clicking the logo mark returns to the homepage hero */
+  onHome?: () => void
+  /** Step-aware back navigation — only rendered when provided */
   onBack?: () => void
   onContinue?: () => void
-  showBack?: boolean
   continueLabel?: string
+  rightExtra?: ReactNode
 }
 
 export function RitualHeader({
   currentStep,
   canContinue,
+  onHome,
   onBack,
   onContinue,
-  showBack = true,
   continueLabel = "Continue",
+  rightExtra,
 }: RitualHeaderProps) {
   const content = STEP_CONTENT[currentStep]
 
@@ -59,15 +61,36 @@ export function RitualHeader({
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="ritual-header__inner">
-        {/* Left: Back button */}
+        {/* Left: Logo mark — always navigates home. Back button appears to its right when onBack is provided */}
         <div className="ritual-header__left">
-          {showBack && onBack && (
+          <motion.button
+            className="ritual-logo-btn"
+            onClick={onHome}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+            aria-label="Return to home"
+            disabled={!onHome}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/b26-mark.svg"
+              alt="bracket26"
+              className="ritual-logo-img"
+              width={35}
+              height={26}
+            />
+          </motion.button>
+
+          {onBack && (
             <motion.button
               className="ritual-nav-btn ritual-nav-btn--back"
               onClick={onBack}
               whileHover={{ x: -2 }}
-              whileTap={{ scale: 0.98 }}
-              aria-label="Go back to previous step"
+              whileTap={{ scale: 0.97 }}
+              aria-label="Go back"
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             >
               <ArrowLeft className="ritual-nav-icon" />
               <span className="ritual-nav-label">Back</span>
@@ -75,7 +98,7 @@ export function RitualHeader({
           )}
         </div>
 
-        {/* Center: Titles */}
+        {/* Center: Step · Series */}
         <div className="ritual-header__center">
           <AnimatePresence mode="wait">
             <motion.div
@@ -86,15 +109,18 @@ export function RitualHeader({
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             >
-              <h1 className="ritual-title">{content.title}</h1>
-              <p className="ritual-context">{content.context}</p>
-              <p className="ritual-instruction">{content.instruction}</p>
+              <h1 className="ritual-title">
+                <span className="ritual-title-step">{content.step}</span>
+                <span className="ritual-title-sep"> · </span>
+                <span className="ritual-title-series">{content.series}</span>
+              </h1>
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Right: Continue button */}
+        {/* Right: optional extra + Continue */}
         <div className="ritual-header__right">
+          {rightExtra}
           {onContinue && (
             <motion.button
               className={`ritual-nav-btn ritual-nav-btn--continue ${canContinue ? "is-enabled" : ""}`}
@@ -106,8 +132,7 @@ export function RitualHeader({
             >
               <span className="ritual-nav-label">{continueLabel}</span>
               <ArrowRight className="ritual-nav-icon" />
-              
-              {/* Glow effect when enabled */}
+
               {canContinue && (
                 <motion.div
                   className="ritual-continue-glow"
@@ -118,24 +143,6 @@ export function RitualHeader({
               )}
             </motion.button>
           )}
-        </div>
-      </div>
-
-      {/* Progress indicator */}
-      <div className="ritual-progress" aria-hidden="true">
-        <div className="ritual-progress-track">
-          {(["groups", "thirdPlace", "bracket", "wrap"] as RitualStep[]).map((step, index) => {
-            const stepIndex = ["groups", "thirdPlace", "bracket", "wrap"].indexOf(currentStep)
-            const isComplete = index < stepIndex
-            const isCurrent = step === currentStep
-            
-            return (
-              <div
-                key={step}
-                className={`ritual-progress-dot ${isComplete ? "is-complete" : ""} ${isCurrent ? "is-current" : ""}`}
-              />
-            )
-          })}
         </div>
       </div>
     </motion.header>

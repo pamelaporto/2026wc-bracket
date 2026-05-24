@@ -3,10 +3,9 @@
 import type React from "react"
 import { useRef, useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence, useMotionValue, useSpring, animate } from "framer-motion"
-import { ChevronDown, ChevronUp, GripVertical, Lock, Unlock } from "lucide-react"
+import { ChevronDown, GripVertical, Lock, Unlock } from "lucide-react"
 import { createPortal } from "react-dom"
 import { computeFlagGradient } from "@/lib/flags"
-import { Check } from "lucide-react"
 
 type TeamOption = {
   id: string
@@ -30,30 +29,45 @@ type GroupData = {
 type GroupStackProps = {
   groups: GroupData[]
   onTeamsReorder: (groupLetter: string, teams: Team[]) => void
+  onLockedGroupsChange?: (count: number) => void
+  /** Letter of the group to display first (e.g. "D" when user clicked Group D on the carousel) */
+  initialGroupLetter?: string
 }
 
 type MenuPos = { top: number; left: number; width: number }
 
-export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
-  const [activeIndex, setActiveIndex] = useState(0)
+export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initialGroupLetter }: GroupStackProps) {
+  const initialIndex = initialGroupLetter
+    ? Math.max(0, groups.findIndex(g => g.letter === initialGroupLetter))
+    : 0
+  const [activeIndex, setActiveIndex] = useState(initialIndex)
   const [isAnimating, setIsAnimating] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  
+
+  // When entering via the carousel the selected card does a layoutId expand transition.
+  // Flag motion.divs inside that card have their own layoutIds and will fly around
+  // independently during the expand. Suppress their layoutIds until the card
+  // layout animation completes, then restore so drag-to-reorder still works.
+  const [cardTransitionDone, setCardTransitionDone] = useState(!initialGroupLetter)
+
   // Drag state for reordering teams within focused card
   const [draggedTeamIndex, setDraggedTeamIndex] = useState<number | null>(null)
-  
+
   // Lock states per group
   const [lockedGroups, setLockedGroups] = useState<Set<string>>(new Set())
-  const [showLockButton, setShowLockButton] = useState<Set<string>>(new Set())
-  
-  // Auto-save indicator
-  const [showSavedIndicator, setShowSavedIndicator] = useState(false)
-  
-  // Completion modal
-  const [showCompletionModal, setShowCompletionModal] = useState(false)
-  
+
+  // First-time tooltip
+  const TOOLTIP_KEY = "wc2026-lock-tooltip-dismissed"
+  const [showTooltip, setShowTooltip] = useState(false)
+
   // Lock glow animation
   const [lockGlowGroup, setLockGlowGroup] = useState<string | null>(null)
+
+  // Drag affordance teaching
+  const [wiggleRow, setWiggleRow] = useState<number | null>(null)   // index of row to wiggle
+  const [nudgeActive, setNudgeActive] = useState(false)             // inactivity nudge on row 0
+  const [hintText, setHintText] = useState<string | null>(null)     // temporary instruction override
+  const hasInteractedRef = useRef(false)                            // true once any drag starts
   
   // Dropdown state
   const [openDropdown, setOpenDropdown] = useState<{ group: string; index: number } | null>(null)
@@ -70,6 +84,21 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
   const smoothScale = useSpring(breatheScale, springConfig)
 
   const activeGroup = groups[activeIndex]
+
+  const dismissTooltip = () => {
+    setShowTooltip(false)
+    localStorage.setItem(TOOLTIP_KEY, "1")
+  }
+
+  // Show tooltip on first visit
+  useEffect(() => {
+    if (!localStorage.getItem(TOOLTIP_KEY)) {
+      setShowTooltip(true)
+      const t = setTimeout(() => dismissTooltip(), 4000)
+      return () => clearTimeout(t)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Start breathing animation
   useEffect(() => {
@@ -93,6 +122,21 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
     frame = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(frame)
   }, [breatheY, breatheScale])
+
+  // Inactivity nudge — runs once after 4 s if no drag has started
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!hasInteractedRef.current) {
+        setNudgeActive(true)
+        setHintText("Drag teams up or down to rank them")
+        setTimeout(() => {
+          setNudgeActive(false)
+          setHintText(null)
+        }, 2400) // 3 × 0.75 s animation cycles
+      }
+    }, 4000)
+    return () => clearTimeout(t)
+  }, []) // intentionally run once on mount
 
   const goToGroup = useCallback((index: number) => {
     if (isAnimating || index === activeIndex) return
@@ -125,27 +169,10 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
     }
   }, [activeIndex, goToGroup])
 
-  // Auto-save trigger - MUST be defined before toggleLock which uses it
-  const triggerAutoSave = useCallback(() => {
-    // Save to localStorage
-    try {
-      const saveData = {
-        groups: groups.reduce((acc, g) => {
-          acc[g.letter] = g.teams.map(t => t.id)
-          return acc
-        }, {} as Record<string, string[]>),
-        locked: [...lockedGroups],
-        timestamp: Date.now()
-      }
-      localStorage.setItem("wc2026-groups-autosave", JSON.stringify(saveData))
-      
-      // Show saved indicator briefly
-      setShowSavedIndicator(true)
-      setTimeout(() => setShowSavedIndicator(false), 2000)
-    } catch {
-      // ignore localStorage errors
-    }
-  }, [groups, lockedGroups])
+  // Notify parent when lock count changes
+  useEffect(() => {
+    onLockedGroupsChange?.(lockedGroups.size)
+  }, [lockedGroups, onLockedGroupsChange])
 
   // Lock toggle with auto-advance
   const toggleLock = useCallback((letter: string) => {
@@ -163,28 +190,46 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
     
     // If we're locking (not unlocking)
     if (!wasLocked) {
+      // Dismiss first-time tooltip on first lock
+      dismissTooltip()
+
       // Show glow pulse on lock icon
       setLockGlowGroup(letter)
       setTimeout(() => setLockGlowGroup(null), 600)
-      
-      // Check if this completes all groups
+
+      // Auto-advance: circular scan for next unlocked group
       const newLockedCount = lockedGroups.size + 1
-      if (newLockedCount === groups.length) {
-        // Final group - show completion modal instead of advancing
-        setTimeout(() => setShowCompletionModal(true), 400)
-      } else {
-        // Auto-advance to next card after brief delay
+      if (newLockedCount < groups.length) {
         setTimeout(() => {
-          if (activeIndex < groups.length - 1) {
-            goToGroup(activeIndex + 1)
+          const n = groups.length
+          // Include the group we just locked so we skip it too
+          const nowLocked = new Set(lockedGroups)
+          nowLocked.add(letter)
+          for (let offset = 1; offset <= n; offset++) {
+            const nextIndex = (activeIndex + offset) % n
+            if (!nowLocked.has(groups[nextIndex].letter)) {
+              goToGroup(nextIndex)
+              break
+            }
           }
         }, 400)
       }
-      
-      // Trigger auto-save
-      triggerAutoSave()
     }
-  }, [lockedGroups, groups.length, activeIndex, goToGroup, triggerAutoSave])
+  }, [lockedGroups, groups.length, activeIndex, goToGroup])
+
+  // Click-to-teach handler — fires only on real clicks, not drag ends (HTML5 DnD guarantee)
+  const handleRowClick = useCallback((teamIndex: number, isPlaceholder: boolean, isLocked: boolean) => {
+    if (isPlaceholder || isLocked) return
+    // Dismiss any active nudge
+    hasInteractedRef.current = true
+    setNudgeActive(false)
+    // Wiggle the clicked row
+    setWiggleRow(teamIndex)
+    setTimeout(() => setWiggleRow(null), 450)
+    // Temporarily swap instruction sub-text
+    setHintText("Drag to reorder ↕")
+    setTimeout(() => setHintText(null), 2000)
+  }, [])
 
   // Drag handlers for team reordering
   const handleDragStart = (e: React.DragEvent, groupLetter: string, index: number) => {
@@ -192,7 +237,9 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
       e.preventDefault()
       return
     }
-    setShowLockButton(prev => new Set(prev).add(groupLetter))
+    hasInteractedRef.current = true
+    setNudgeActive(false)
+    setHintText(null)
     setDraggedTeamIndex(index)
     e.dataTransfer.effectAllowed = "move"
   }
@@ -216,9 +263,6 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
     
     onTeamsReorder(groupLetter, newTeams)
     setDraggedTeamIndex(null)
-    
-    // Auto-save after reorder
-    triggerAutoSave()
   }
 
   const handleDragEnd = () => setDraggedTeamIndex(null)
@@ -297,15 +341,15 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
     if (diff === 0) {
       return { y: 0, scale: 1, opacity: 1, zIndex: 10, blur: 0 }
     } else if (diff === -1) {
-      return { y: -280, scale: 0.85, opacity: 0.5, zIndex: 5, blur: 2 }
+      return { y: -280, scale: 0.87, opacity: 0.12, zIndex: 5, blur: 6 }
     } else if (diff === 1) {
-      return { y: 280, scale: 0.85, opacity: 0.5, zIndex: 5, blur: 2 }
+      return { y: 280, scale: 0.87, opacity: 0.12, zIndex: 5, blur: 6 }
     } else if (diff === -2) {
-      return { y: -480, scale: 0.7, opacity: 0.2, zIndex: 2, blur: 4 }
+      return { y: -480, scale: 0.73, opacity: 0.04, zIndex: 2, blur: 10 }
     } else if (diff === 2) {
-      return { y: 480, scale: 0.7, opacity: 0.2, zIndex: 2, blur: 4 }
+      return { y: 480, scale: 0.73, opacity: 0.04, zIndex: 2, blur: 10 }
     } else {
-      return { y: diff * 200, scale: 0.5, opacity: 0, zIndex: 0, blur: 8 }
+      return { y: diff * 200, scale: 0.5, opacity: 0, zIndex: 0, blur: 12 }
     }
   }
 
@@ -328,97 +372,40 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
       {/* Vignette - corners fall into darkness */}
       <div className="stadium-vignette" aria-hidden="true" />
 
-      {/* Progress pill - top right */}
-      <div className="stack-progress-pill">
-        <span className="stack-progress-pill-text">
-          {lockedGroups.size} of {groups.length} groups locked
-        </span>
-      </div>
-      
-      {/* Auto-save indicator */}
-      <AnimatePresence>
-        {showSavedIndicator && (
-          <motion.div
-            className="stack-saved-indicator"
-            initial={{ opacity: 0, y: -10 }}
+      {/* Instruction — positioned above the centered card */}
+      <div className="stage-instruction" aria-live="polite">
+        <p className="stage-instruction-headline">Rank teams in each group</p>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={hintText ?? "default"}
+            className="stage-instruction-sub"
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.2 }}
           >
-            Saved
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Completion modal */}
-      <AnimatePresence>
-        {showCompletionModal && (
-          <motion.div
-            className="stack-completion-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            onClick={() => setShowCompletionModal(false)}
-          >
-            <motion.div
-              className="stack-completion-modal"
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="stack-completion-title">All Groups Locked</h2>
-              <p className="stack-completion-text">Your World Cup is taking shape.</p>
-              <p className="stack-completion-hint">Continue when you&apos;re ready.</p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            {hintText ?? "Lock your picks when you’re ready."}
+          </motion.p>
+        </AnimatePresence>
+      </div>
 
       {/* Navigation indicators */}
       <div className="stack-nav">
-        <button 
-          className="stack-nav-btn"
-          onClick={() => goToGroup(activeIndex - 1)}
-          disabled={activeIndex === 0 || isAnimating}
-          aria-label="Previous group"
-        >
-          <ChevronUp className="stack-nav-icon" />
-        </button>
-        
         <div className="stack-nav-dots">
-  {groups.map((g, i) => {
-    const isLocked = lockedGroups.has(g.letter)
-
-    return (
-      <button
-        key={g.letter}
-        className={`stack-nav-dot ${i === activeIndex ? "is-active" : ""} ${isLocked ? "is-selected" : ""}`}
-        onClick={() => goToGroup(i)}
-        aria-label={`Go to Group ${g.letter}`}
-      >
-        <span className="stack-nav-dot-label">{g.letter}</span>
-
-        {isLocked && (
-          <span className="stack-nav-dot-check">
-            <Check className="w-2 h-2" />
-          </span>
-        )}
-      </button>
-    )
-  })}
-</div>
-        
-        <button 
-          className="stack-nav-btn"
-          onClick={() => goToGroup(activeIndex + 1)}
-          disabled={activeIndex === groups.length - 1 || isAnimating}
-          aria-label="Next group"
-        >
-          <ChevronDown className="stack-nav-icon" />
-        </button>
+          {groups.map((g, i) => {
+            const isLocked = lockedGroups.has(g.letter)
+            return (
+              <button
+                key={g.letter}
+                className={`stack-nav-dot ${i === activeIndex ? "is-active" : ""} ${isLocked ? "is-locked" : ""}`}
+                onClick={() => goToGroup(i)}
+                aria-label={`Go to Group ${g.letter}`}
+              >
+                <span className="stack-nav-dot-label">{g.letter}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* The ceremonial stack */}
@@ -427,11 +414,13 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
           const pos = getStackPosition(index)
           const isActive = index === activeIndex
           const isLocked = lockedGroups.has(group.letter)
-          const showLock = showLockButton.has(group.letter)
-          
+
           return (
             <motion.div
               key={group.letter}
+              layoutId={initialGroupLetter && group.letter === initialGroupLetter
+                ? `group-card-${group.letter}`
+                : undefined}
               className={`stack-card ${isActive ? "is-active" : ""} ${isLocked ? "is-locked" : ""}`}
               initial={false}
               animate={{
@@ -450,7 +439,9 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
                 stiffness: 100,
                 damping: 20,
                 mass: 1.2,
+                layout: { duration: 0.85, ease: [0.23, 1, 0.32, 1] },
               }}
+              onLayoutAnimationComplete={() => setCardTransitionDone(true)}
             >
               {/* Card ambient layer - subtle midnight blue */}
               <div className="stack-card-ambient" />
@@ -461,25 +452,47 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
               {/* Group letter tab */}
               <div className="stack-card-tab">{group.letter}</div>
               
-              {/* Lock button */}
-              {showLock && isActive && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className={`stack-lock-btn ${isLocked ? "is-locked" : ""} ${lockGlowGroup === group.letter ? "is-glowing" : ""}`}
-                  onClick={() => toggleLock(group.letter)}
-                >
-                  {isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                  <span>{isLocked ? "Locked" : "Lock"}</span>
-                  {lockGlowGroup === group.letter && (
-                    <motion.span
-                      className="stack-lock-glow-pulse"
-                      initial={{ opacity: 0.8, scale: 1 }}
-                      animate={{ opacity: 0, scale: 1.8 }}
-                      transition={{ duration: 0.6, ease: "easeOut" }}
-                    />
-                  )}
-                </motion.button>
+              {/* Lock button — always visible on active card */}
+              {isActive && (
+                <div className="stack-lock-slot">
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className={`stack-lock-btn ${isLocked ? "is-locked" : ""} ${lockGlowGroup === group.letter ? "is-glowing" : ""}`}
+                    onClick={() => toggleLock(group.letter)}
+                  >
+                    {isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                    <span>{isLocked ? "Locked" : "Lock In"}</span>
+                    {lockGlowGroup === group.letter && (
+                      <motion.span
+                        className="stack-lock-glow-pulse"
+                        initial={{ opacity: 0.8, scale: 1 }}
+                        animate={{ opacity: 0, scale: 1.8 }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
+                      />
+                    )}
+                  </motion.button>
+
+                  {/* First-time tooltip */}
+                  <AnimatePresence>
+                    {showTooltip && (
+                      <motion.div
+                        className="stack-lock-tooltip"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 4 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        Lock your group when your picks feel right.
+                        <button
+                          className="stack-lock-tooltip-close"
+                          onClick={dismissTooltip}
+                          aria-label="Dismiss tip"
+                        >×</button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
 
               {/* Card content */}
@@ -493,15 +506,22 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
                   return (
                     <div
                       key={`${group.letter}-${team.id}-${teamIndex}`}
-                      className={`stack-team-row ${draggedTeamIndex === teamIndex && isActive ? "is-dragging" : ""} ${isLocked ? "is-locked" : ""}`}
+                      className={[
+                        "stack-team-row",
+                        draggedTeamIndex === teamIndex && isActive ? "is-dragging" : "",
+                        isLocked ? "is-locked" : "",
+                        wiggleRow === teamIndex && isActive ? "is-click-hint" : "",
+                        nudgeActive && isActive && teamIndex === 0 ? "is-nudge" : "",
+                      ].filter(Boolean).join(" ")}
                       draggable={isActive && !isLocked}
                       onDragStart={(e) => handleDragStart(e, group.letter, teamIndex)}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, group.letter, teamIndex)}
                       onDragEnd={handleDragEnd}
+                      onClick={() => handleRowClick(teamIndex, team.is_placeholder, isLocked)}
                     >
                       <div className="stack-drag-handle">
-                        <GripVertical className="w-4 h-4 opacity-40" />
+                        <GripVertical className="w-4 h-4" />
                       </div>
                       
                       <div className="stack-pos-pill">
@@ -510,7 +530,13 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
                       
                       <motion.div
                         className="stack-flag"
-                        layoutId={`flag-${team.id}`}
+                        layoutId={
+                          // Suppress during the card expand transition so flags
+                          // don't fly independently. Restored once card settles.
+                          cardTransitionDone || group.letter !== initialGroupLetter
+                            ? `flag-${team.id}`
+                            : undefined
+                        }
                         style={{ backgroundImage: computeFlagGradient(team.colors) }}
                         transition={{ type: "spring", stiffness: 260, damping: 28 }}
                       />
@@ -571,86 +597,13 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
         })}
       </div>
       
-      {/* Current group indicator */}
-      
-      
-      {/* Inline styles for progress indicators */}
+      {/* Progress counter — below the centered card */}
+      <div className="stack-progress-counter">
+        {lockedGroups.size} of {groups.length} Locked
+      </div>
+
+      {/* Lock button glow pulse */}
       <style jsx>{`
-        .stack-progress-pill {
-          position: fixed;
-          top: 140px;
-          right: 24px;
-          z-index: 100;
-          padding: 8px 14px;
-          border-radius: 20px;
-          background: rgba(10, 15, 25, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(12px);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 20px rgba(var(--wc-accent-rgb), 0.08);
-        }
-        
-        .stack-progress-pill-text {
-          font-size: 12px;
-          font-weight: 500;
-          color: rgba(255, 255, 255, 0.55);
-          letter-spacing: 0.02em;
-        }
-        
-        .stack-saved-indicator {
-          position: fixed;
-          top: 140px;
-          right: 180px;
-          z-index: 100;
-          padding: 6px 12px;
-          border-radius: 8px;
-          background: rgba(var(--wc-accent-rgb), 0.18);
-          border: 1px solid rgba(var(--wc-accent-rgb), 0.3);
-          font-size: 11px;
-          font-weight: 600;
-          color: var(--wc-accent);
-          letter-spacing: 0.04em;
-        }
-        
-        /* Completion modal */
-        .stack-completion-overlay {
-          position: fixed;
-          inset: 0;
-          z-index: 1000;
-          display: grid;
-          place-items: center;
-          background: rgba(5, 8, 14, 0.85);
-          backdrop-filter: blur(8px);
-        }
-        
-        .stack-completion-modal {
-          text-align: center;
-          padding: 48px 56px;
-          border-radius: 20px;
-          background: rgba(15, 22, 35, 0.95);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), 0 0 80px rgba(var(--wc-accent-rgb), 0.1);
-        }
-        
-        .stack-completion-title {
-          font-size: 24px;
-          font-weight: 700;
-          color: rgba(255, 255, 255, 0.95);
-          letter-spacing: -0.02em;
-          margin-bottom: 12px;
-        }
-        
-        .stack-completion-text {
-          font-size: 16px;
-          color: rgba(255, 255, 255, 0.6);
-          margin-bottom: 8px;
-        }
-        
-        .stack-completion-hint {
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.4);
-        }
-        
-        /* Lock button glow pulse */
         .stack-lock-glow-pulse {
           position: absolute;
           inset: 0;
@@ -658,42 +611,10 @@ export function GroupStack({ groups, onTeamsReorder }: GroupStackProps) {
           background: rgba(var(--wc-accent-rgb), 0.35);
           pointer-events: none;
         }
-        
+
         :global(.stack-lock-btn.is-glowing) {
           position: relative;
           overflow: visible;
-        }
-        
-        @media (max-width: 768px) {
-          .stack-progress-pill {
-            top: 100px;
-            right: 16px;
-            padding: 6px 10px;
-          }
-          
-          .stack-progress-pill-text {
-            font-size: 10px;
-          }
-          
-          .stack-saved-indicator {
-            top: 100px;
-            right: 140px;
-            padding: 4px 8px;
-            font-size: 9px;
-          }
-          
-          .stack-completion-modal {
-            padding: 32px 40px;
-            margin: 0 20px;
-          }
-          
-          .stack-completion-title {
-            font-size: 20px;
-          }
-          
-          .stack-completion-text {
-            font-size: 14px;
-          }
         }
       `}</style>
     </div>

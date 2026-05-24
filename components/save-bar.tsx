@@ -1,75 +1,75 @@
 "use client"
 
+import { Check } from "lucide-react"
 import { useState } from "react"
-import { CheckCircle2, Save } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 type SaveBarProps = {
-  onSave: (name: string) => void
+  onSave: (email: string) => void
   progress: { done: number; total: number }
-  defaultName?: string
-  visible?: boolean
+  defaultEmail?: string
 }
 
-export function SaveBar({ onSave, progress, defaultName = "", visible = false }: SaveBarProps) {
-  const [name, setName] = useState(defaultName)
-  const [isSaved, setIsSaved] = useState(false)
+function isValidEmail(v: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
+}
+
+export function SaveBar({ onSave, progress, defaultEmail = "" }: SaveBarProps) {
+  const [email, setEmail] = useState(defaultEmail)
+  const [saved, setSaved] = useState(!!defaultEmail)
 
   const handleSave = () => {
-    const trimmed = name.trim()
-    if (!trimmed) return
+    const trimmed = email.trim()
+    if (!isValidEmail(trimmed)) return
     onSave(trimmed)
-    setIsSaved(true)
-    window.setTimeout(() => setIsSaved(false), 1500)
+    setSaved(true)
   }
 
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="savebar-wrapper"
-        >
-          <div className="savebar">
-            <div className="savebar-left">
-              <span className="savebar-dot" aria-hidden="true" />
-              <span className="savebar-text">
-                <strong>{progress.done}</strong> of {progress.total}
-              </span>
-            </div>
+    <div className="savebar">
+      <div className="savebar-left">
+        <span className="savebar-dot" aria-hidden="true" />
+        <span className="savebar-text">
+          <strong>{progress.done}</strong> of {progress.total} groups
+        </span>
+      </div>
 
-            <div className="savebar-right">
-              <Input
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSave()}
-                className="savebar-input"
-              />
-
-              <Button onClick={handleSave} disabled={!name.trim() || isSaved} className="savebar-btn">
-                {isSaved ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                    Saved
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-3.5 h-3.5 mr-1.5" />
-                    Save
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      <div className="savebar-right">
+        {saved ? (
+          <>
+            <span className="savebar-saved-label">
+              <Check className="w-3.5 h-3.5 flex-shrink-0" />
+              {email}
+            </span>
+            <button
+              type="button"
+              className="savebar-edit-btn"
+              onClick={() => setSaved(false)}
+            >
+              Edit
+            </button>
+          </>
+        ) : (
+          <>
+            <Input
+              type="email"
+              placeholder="Enter email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSave()}
+              className="savebar-input"
+            />
+            <Button
+              onClick={handleSave}
+              disabled={!isValidEmail(email)}
+              className="savebar-btn"
+            >
+              Save
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
   )
 }
