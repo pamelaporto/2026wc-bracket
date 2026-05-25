@@ -29,7 +29,10 @@ export function ThirdPlaceStep({
   const [activeIndex, setActiveIndex] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  
+
+  // Comparison modal
+  const [showComparison, setShowComparison] = useState(false)
+
   // Select glow animation
   const [selectGlowGroup, setSelectGlowGroup] = useState<string | null>(null)
   
@@ -196,8 +199,8 @@ export function ThirdPlaceStep({
 
       {/* Instruction — positioned above the centered card */}
       <div className="stage-instruction" aria-live="polite">
-        <p className="stage-instruction-headline">Choose the third-place teams</p>
-        <p className="stage-instruction-sub">New in 2026 — 8 of 12 third-place teams advance. Pick yours.</p>
+        <p className="stage-instruction-headline">Choose the best third-place teams</p>
+        <p className="stage-instruction-sub">New for 2026: the 8 best third-place teams advance to the knockout stage.</p>
       </div>
 
       {/* Navigation indicators */}
@@ -285,12 +288,12 @@ export function ThirdPlaceStep({
                     {isSelected ? (
                       <>
                         <Check className="w-4 h-4" />
-                        <span>Selected</span>
+                        <span>Advanced</span>
                       </>
                     ) : (
                       <>
                         <Plus className="w-4 h-4" />
-                        <span>Select</span>
+                        <span>Advance</span>
                       </>
                     )}
                   </motion.button>
@@ -351,10 +354,73 @@ export function ThirdPlaceStep({
             )
           })}
         </div>
-        <span className={`tp-chips-count ${selectedGroups.size === 8 ? "tp-chips-count--complete" : ""}`}>
-          {selectedGroups.size} / 8
-        </span>
+        <div className="tp-chips-footer">
+          <span className={`tp-chips-count ${selectedGroups.size === 8 ? "tp-chips-count--complete" : ""}`}>
+            {selectedGroups.size} / 8
+          </span>
+          <button
+            className="tp-compare-btn"
+            onClick={() => setShowComparison(true)}
+            aria-label="View all 12 third-place teams"
+          >
+            View all 12 ↗
+          </button>
+        </div>
       </div>
+
+      {/* ── Read-only comparison modal ───────────────────────────────────────── */}
+      <AnimatePresence>
+        {showComparison && (
+          <motion.div
+            className="tp-compare-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setShowComparison(false)}
+          >
+            <motion.div
+              className="tp-compare-sheet"
+              initial={{ opacity: 0, y: 24, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 300, damping: 28 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="tp-compare-header">
+                <span className="tp-compare-title">All 12 third-place teams</span>
+                <button
+                  className="tp-compare-close"
+                  onClick={() => setShowComparison(false)}
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <ul className="tp-compare-list">
+                {sortedTeams.map((team, i) => {
+                  const isSelected = selectedGroups.has(team.groupLetter)
+                  return (
+                    <li key={team.groupLetter} className="tp-compare-row">
+                      <span className="tp-compare-rank">#{i + 1}</span>
+                      <div
+                        className="tp-compare-flag"
+                        style={{ backgroundImage: computeFlagGradient(team.colors) }}
+                      />
+                      <span className="tp-compare-name">{team.name}</span>
+                      <span className="tp-compare-group">Group {team.groupLetter}</span>
+                      {isSelected && (
+                        <span className="tp-compare-badge">Selected</span>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   )

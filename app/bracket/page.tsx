@@ -338,7 +338,7 @@ export default function BracketPage() {
           width: 100%;
           display: flex;
           justify-content: center;
-          padding: 64px 24px 24px;
+          padding: 64px 24px 0;
         }
 
         /* ── Champion Card — exact group card glass recipe ── */
@@ -566,14 +566,11 @@ export default function BracketPage() {
              The pill has no positioning of its own, so there is zero
              FM-transform / CSS-transform conflict for horizontal centering.   ── */
         .bk-recovery-overlay {
-          position: fixed;
-          bottom: 28px;
-          left: 24px;
-          right: 24px;
+          width: 100%;
           display: flex;
           justify-content: center;
-          z-index: 200;
-          pointer-events: none;
+          padding: 24px 0 36px;
+          flex-shrink: 0;
         }
 
         /* ── Recovery pill — pure visual styles only ── */
@@ -581,6 +578,7 @@ export default function BracketPage() {
           display: flex;
           align-items: center;
           gap: 12px;
+          width: fit-content;
           padding: 10px 12px 10px 18px;
           border-radius: 999px;
           background: rgba(24, 27, 40, 0.98);
@@ -589,7 +587,6 @@ export default function BracketPage() {
           -webkit-backdrop-filter: blur(20px);
           box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
           white-space: nowrap;
-          pointer-events: all;
         }
         .bk-recovery-count {
           font-size: 13px;
