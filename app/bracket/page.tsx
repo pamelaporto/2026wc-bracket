@@ -8,8 +8,6 @@ import { Trophy, ArrowRight } from "lucide-react"
 import { BracketCard } from "@/components/bracket-card"
 import { computeFlagGradient } from "@/lib/flags"
 import { RitualHeader } from "@/components/ritual-header"
-import { ShareSheet } from "@/components/share-sheet"
-import { extractShareCard } from "@/lib/share"
 import {
   initializeBracket,
   selectWinner,
@@ -35,7 +33,6 @@ export default function BracketPage() {
   const [ready, setReady] = useState(false)
   const [groups, setGroups] = useState<GroupsState | null>(null)
   const [bracket, setBracket] = useState<BracketState | null>(null)
-  const [shareSheetOpen, setShareSheetOpen] = useState(false)
 
   useEffect(() => {
     const groupData = localStorage.getItem(STORAGE_KEY)
@@ -210,12 +207,6 @@ export default function BracketPage() {
                     <span>Reveal Your Prophecy</span>
                     <ArrowRight size={15} />
                   </a>
-                  <button
-                    className="bk-champion-share-btn"
-                    onClick={() => setShareSheetOpen(true)}
-                  >
-                    <span>Download &amp; Share</span>
-                  </button>
                 </div>
               </div>
             </motion.div>
@@ -314,15 +305,6 @@ export default function BracketPage() {
           </div>
         </div>
       </div>{/* end bk-shell */}
-
-      {/* Share Sheet */}
-      {bracket && (
-        <ShareSheet
-          card={extractShareCard(bracket)}
-          isOpen={shareSheetOpen}
-          onClose={() => setShareSheetOpen(false)}
-        />
-      )}
 
       <style jsx>{`
         .bk-shell {
@@ -495,30 +477,6 @@ export default function BracketPage() {
 
         .bk-champion-cta:hover {
           opacity: 0.88;
-        }
-
-        /* ── Download and Share secondary button ── */
-        .bk-champion-share-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 7px;
-          padding: 11px 22px;
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.07);
-          border: 1px solid rgba(255, 255, 255, 0.13);
-          color: rgba(255, 255, 255, 0.65);
-          font-size: 13px;
-          font-weight: 600;
-          font-family: inherit;
-          cursor: pointer;
-          transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-          width: 100%;
-        }
-        .bk-champion-share-btn:hover {
-          background: rgba(255, 255, 255, 0.11);
-          border-color: rgba(255, 255, 255, 0.22);
-          color: rgba(255, 255, 255, 0.9);
         }
 
         /* ── Scroll Area ── */

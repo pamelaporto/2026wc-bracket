@@ -2,33 +2,25 @@
 
 import { useState, useCallback } from "react"
 import { motion } from "framer-motion"
-import { Share2, RotateCcw, Check } from "lucide-react"
+import { Download, RotateCcw } from "lucide-react"
 import { computeFlagGradient } from "@/lib/flags"
 import type { WrappedProfile } from "@/lib/wrapped-engine"
+import type { BracketState } from "@/lib/build-bracket"
+import { ShareSheet } from "@/components/share-sheet"
+import { extractShareCard } from "@/lib/share"
 
 type Props = {
   profile: WrappedProfile
+  bracket: BracketState | null
   onReplay: () => void
 }
 
-export function WrappedShare({ profile, onReplay }: Props) {
-  const [copied, setCopied] = useState(false)
+export function WrappedShare({ profile, bracket, onReplay }: Props) {
+  const [shareSheetOpen, setShareSheetOpen] = useState(false)
 
-  const shareText = `My FIFA World Cup 2026 Wrapped:\n🏆 Champion: ${profile.champion.name}\n🎭 ${profile.personalityArchetype}\n"${profile.headline}"\n\nPick yours →`
-
-  const handleShare = useCallback(async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: "My World Cup 2026 Wrapped", text: shareText })
-      } catch {
-        // User cancelled — no action needed
-      }
-    } else {
-      await navigator.clipboard.writeText(shareText)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2500)
-    }
-  }, [shareText])
+  const handleOpenShare = useCallback(() => {
+    setShareSheetOpen(true)
+  }, [])
 
   return (
     <div className="wr-screen wr-share">
@@ -102,20 +94,11 @@ export function WrappedShare({ profile, onReplay }: Props) {
         >
           <motion.button
             className="wr-share-btn"
-            onClick={handleShare}
+            onClick={handleOpenShare}
             whileTap={{ scale: 0.97 }}
           >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-4 h-4" />
-                <span>Share</span>
-              </>
-            )}
+            <Download className="w-4 h-4" />
+            <span>Download &amp; Share Your Prophecy</span>
           </motion.button>
 
           <button className="wr-replay-btn" onClick={onReplay}>
@@ -124,6 +107,15 @@ export function WrappedShare({ profile, onReplay }: Props) {
           </button>
         </motion.div>
       </div>
+
+      {/* Share Sheet */}
+      {bracket && (
+        <ShareSheet
+          card={extractShareCard(bracket)}
+          isOpen={shareSheetOpen}
+          onClose={() => setShareSheetOpen(false)}
+        />
+      )}
     </div>
   )
 }

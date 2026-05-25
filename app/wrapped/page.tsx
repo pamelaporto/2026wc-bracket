@@ -36,6 +36,7 @@ export default function WrappedPage() {
   const [mounted, setMounted] = useState(false)
   const [step, setStep] = useState<WrappedStep>("name")
   const [profile, setProfile] = useState<WrappedProfile | null>(null)
+  const [bracketState, setBracketState] = useState<BracketState | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -52,6 +53,7 @@ export default function WrappedPage() {
     }
 
     if (!bracket.champion) { router.push("/bracket"); return }
+    setBracketState(bracket)
 
     const wrappedName = localStorage.getItem(WRAPPED_NAME_KEY) ?? ""
     const hasVisited = localStorage.getItem(WRAPPED_VISITED_KEY) === "true"
@@ -155,7 +157,7 @@ export default function WrappedPage() {
 
         {step === "share" && profile && (
           <motion.div key="share" className="wr-step" {...SLIDE_VARIANTS} transition={SLIDE_TRANSITION}>
-            <WrappedShare profile={profile} onReplay={handleReplay} />
+            <WrappedShare profile={profile} bracket={bracketState} onReplay={handleReplay} />
           </motion.div>
         )}
       </AnimatePresence>
