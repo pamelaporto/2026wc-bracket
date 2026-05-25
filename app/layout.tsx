@@ -2,7 +2,7 @@ import "./globals.css"
 import type { Metadata } from "next"
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-
+import { Providers } from './providers'
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -35,10 +35,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${jakarta.variable} ${mono.variable}`}>
-      <body>
-        {children}
-        <Analytics />
-      </body>
+     <body>
+  <Providers>
+    {children}
+    <Analytics />
+  </Providers>
+</body>
     </html>
   )
 }
