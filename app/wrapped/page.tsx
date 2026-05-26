@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { buildWrappedProfile, type WrappedProfile } from "@/lib/wrapped-engine"
-import type { BracketState } from "@/lib/build-bracket"
+import type { BracketState, GroupsState } from "@/lib/build-bracket"
 import { WrappedNameGate } from "@/components/wrapped/wrapped-name-gate"
 import { WrappedOpening } from "@/components/wrapped/wrapped-opening"
 import { WrappedChampion } from "@/components/wrapped/wrapped-champion"
@@ -12,10 +12,16 @@ import { WrappedHeadline } from "@/components/wrapped/wrapped-headline"
 import { WrappedPersonality } from "@/components/wrapped/wrapped-personality"
 import { WrappedInsights } from "@/components/wrapped/wrapped-insights"
 import { WrappedShare } from "@/components/wrapped/wrapped-share"
+import { WrappedShareDocument } from "@/components/wrapped/wrapped-share-document"
+
+// ── Toggle: set false to revert to current share screen ──────────────────────
+const PREVIEW_DOC = true
 
 const BRACKET_PICKS_KEY = "wc2026-bracket-picks-v1"
 const WRAPPED_NAME_KEY = "wc2026-wrapped-name-v1"
 const WRAPPED_VISITED_KEY = "wc2026-wrapped-visited-v1"
+const GROUP_DRAFT_KEY = "wc2026-bracket-draft-v5"
+const THIRD_PLACE_GROUPS_KEY = "wc2026-third-place-selection-v1"
 
 type WrappedStep = "name" | "opening" | "champion" | "headline" | "personality" | "insights" | "share"
 
@@ -37,6 +43,8 @@ export default function WrappedPage() {
   const [step, setStep] = useState<WrappedStep>("name")
   const [profile, setProfile] = useState<WrappedProfile | null>(null)
   const [bracketState, setBracketState] = useState<BracketState | null>(null)
+  const [groupsState, setGroupsState] = useState<GroupsState | null>(null)
+  const [advancingThirdGroups, setAdvancingThirdGroups] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     setMounted(true)
@@ -55,6 +63,16 @@ export default function WrappedPage() {
     if (!bracket.champion) { router.push("/bracket"); return }
     setBracketState(bracket)
 
+    // Doc prototype: read group + third-place data
+    const groupsRaw = localStorage.getItem(GROUP_DRAFT_KEY)
+    if (groupsRaw) {
+      try { setGroupsState(JSON.parse(groupsRaw)) } catch { /* ignore */ }
+    }
+    const thirdRaw = localStorage.getItem(THIRD_PLACE_GROUPS_KEY)
+    if (thirdRaw) {
+      try { setAdvancingThirdGroups(new Set(JSON.parse(thirdRaw) as string[])) } catch { /* ignore */ }
+    }
+
     const wrappedName = localStorage.getItem(WRAPPED_NAME_KEY) ?? ""
     const hasVisited = localStorage.getItem(WRAPPED_VISITED_KEY) === "true"
 
@@ -62,7 +80,7 @@ export default function WrappedPage() {
       const p = buildWrappedProfile(bracket, wrappedName)
       setProfile(p)
       // Return visitors skip straight to share card
-      setStep(hasVisited ? "share" : "opening")
+      setStep("opening")
     } else {
       // Build profile with empty name for now; name gate will rebuild it
       setProfile(buildWrappedProfile(bracket, ""))
@@ -157,7 +175,17 @@ export default function WrappedPage() {
 
         {step === "share" && profile && (
           <motion.div key="share" className="wr-step" {...SLIDE_VARIANTS} transition={SLIDE_TRANSITION}>
-            <WrappedShare profile={profile} bracket={bracketState} onReplay={handleReplay} />
+            {PREVIEW_DOC && bracketState ? (
+              <WrappedShareDocument
+                profile={profile}
+                bracket={bracketState}
+                groupsState={groupsState}
+                advancingThirdGroups={advancingThirdGroups}
+                onReplay={handleReplay}
+              />
+            ) : (
+              <WrappedShare profile={profile} bracket={bracketState} onReplay={handleReplay} />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

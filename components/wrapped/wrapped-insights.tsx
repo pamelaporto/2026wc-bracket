@@ -51,7 +51,7 @@ export function WrappedInsights({ insights, onContinue }: Props) {
           transition={{ delay: 0.4 + insights.length * 0.2 + 0.3, duration: 0.5 }}
           whileTap={{ scale: 0.97 }}
         >
-          See Your Card
+          See your bracket &amp; picks
         </motion.button>
       </div>
     </div>

@@ -14,6 +14,7 @@ import {
   type RankedThirdPlaceTeam,
 } from "@/lib/thirdPlace"
 import { ThirdPlaceStep } from "@/components/third-place-step"
+import { CountdownTimer } from "@/components/countdown-timer"
 
 type TeamOption = {
   id: string
@@ -284,8 +285,16 @@ export default function Home() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.55, duration: 1.0, ease: "easeOut" }}
               >
-                OF THE FIFA WORLD CUP 2026
+                OF THE FIFA WORLD CUP 2026 · MEXICO · UNITED STATES · CANADA
               </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.85, duration: 1.0, ease: "easeOut" }}
+              >
+                <CountdownTimer />
+              </motion.div>
             </div>
 
             {/* Hint — appears after cards are visible */}
@@ -299,16 +308,17 @@ export default function Home() {
               Pick a group to begin
             </motion.p>
 
-            {/* Disclaimer */}
-            <motion.p
+            {/* Disclaimer + privacy link */}
+            <motion.div
               className="ci-disclaimer"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 2.6, duration: 1.2, ease: "easeOut" }}
-              aria-hidden="true"
             >
-              Independent fan-made prediction experience. Not affiliated with FIFA.
-            </motion.p>
+              Independent fan-made experience. Not affiliated with FIFA.
+              <span className="ci-disclaimer-sep" aria-hidden="true"> · </span>
+              <a href="/privacy" className="ci-disclaimer-link">Privacy Policy</a>
+            </motion.div>
 
           </div>
         )}

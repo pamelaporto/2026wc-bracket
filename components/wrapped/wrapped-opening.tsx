@@ -64,7 +64,7 @@ export function WrappedOpening({ displayName, champion, onContinue }: Props) {
           animate={{ opacity: 0.45 }}
           transition={{ delay: 1.8, duration: 0.4 }}
         >
-          tap to skip
+          Tap to continue
         </motion.div>
       </motion.div>
     </div>
