@@ -43,6 +43,14 @@ export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initi
   const [activeIndex, setActiveIndex] = useState(initialIndex)
   const [isAnimating, setIsAnimating] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const touchStartY = useRef<number>(0)
+  const touchStartX = useRef<number>(0)
+  const touchStartTime = useRef<number>(0)
+
+  // Mobile detection — state (not ref) so instruction text re-renders correctly
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
+  const [promoteFeedback, setPromoteFeedback] = useState<number | null>(null)
+  const promoteLastTap = useRef(0)
 
   // When entering via the carousel the selected card does a layoutId expand transition.
   // Flag motion.divs inside that card have their own layoutIds and will fly around
@@ -98,6 +106,11 @@ export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initi
       return () => clearTimeout(t)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Detect touch device once on mount
+  useEffect(() => {
+    setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches)
   }, [])
 
   // Start breathing animation
@@ -169,6 +182,27 @@ export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initi
     }
   }, [activeIndex, goToGroup])
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+    touchStartX.current = e.touches[0].clientX
+    touchStartTime.current = Date.now()
+  }, [])
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const deltaY = touchStartY.current - e.changedTouches[0].clientY
+    const deltaX = touchStartX.current - e.changedTouches[0].clientX
+    const elapsed = Date.now() - touchStartTime.current
+
+    // Cancel if horizontal movement dominates — protects iOS back-swipe
+    if (Math.abs(deltaX) > Math.abs(deltaY)) return
+
+    const velocity = Math.abs(deltaY) / elapsed // px/ms
+    const threshold = velocity > 0.5 ? 20 : 40
+
+    if (deltaY > threshold) goToGroup(activeIndex + 1)
+    else if (deltaY < -threshold) goToGroup(activeIndex - 1)
+  }, [activeIndex, goToGroup])
+
   // Notify parent when lock count changes
   useEffect(() => {
     onLockedGroupsChange?.(lockedGroups.size)
@@ -217,19 +251,44 @@ export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initi
     }
   }, [lockedGroups, groups.length, activeIndex, goToGroup])
 
-  // Click-to-teach handler — fires only on real clicks, not drag ends (HTML5 DnD guarantee)
-  const handleRowClick = useCallback((teamIndex: number, isPlaceholder: boolean, isLocked: boolean) => {
+  // Mobile tap-to-promote — moves tapped team up one position
+  const handlePromoteTeam = useCallback((groupLetter: string, teamIndex: number) => {
+    const now = Date.now()
+    if (now - promoteLastTap.current < 150) return  // debounce rapid taps
+    promoteLastTap.current = now
+
+    // Flash feedback on tapped row regardless of position
+    setPromoteFeedback(teamIndex)
+    setTimeout(() => setPromoteFeedback(null), 280)
+
+    if (teamIndex === 0) return  // already at top — feedback only, no reorder
+
+    const group = groups.find(g => g.letter === groupLetter)
+    if (!group) return
+
+    const newTeams = [...group.teams]
+    // Swap tapped team with the one directly above it
+    ;[newTeams[teamIndex - 1], newTeams[teamIndex]] = [newTeams[teamIndex], newTeams[teamIndex - 1]]
+    onTeamsReorder(groupLetter, newTeams)
+  }, [groups, onTeamsReorder])
+
+  // Row click handler — promotes on mobile, teaches drag on desktop
+  const handleRowClick = useCallback((groupLetter: string, teamIndex: number, isPlaceholder: boolean, isLocked: boolean) => {
     if (isPlaceholder || isLocked) return
-    // Dismiss any active nudge
+
+    if (isTouchDevice) {
+      handlePromoteTeam(groupLetter, teamIndex)
+      return
+    }
+
+    // Desktop: dismiss nudge, wiggle row, show drag hint
     hasInteractedRef.current = true
     setNudgeActive(false)
-    // Wiggle the clicked row
     setWiggleRow(teamIndex)
     setTimeout(() => setWiggleRow(null), 450)
-    // Temporarily swap instruction sub-text
     setHintText("Drag to reorder ↕")
     setTimeout(() => setHintText(null), 2000)
-  }, [])
+  }, [isTouchDevice, handlePromoteTeam])
 
   // Drag handlers for team reordering
   const handleDragStart = (e: React.DragEvent, groupLetter: string, index: number) => {
@@ -359,6 +418,8 @@ export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initi
       className="group-stack-container"
       onWheel={handleWheel}
       onKeyDown={handleKeyDown}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       tabIndex={0}
     >
       {/* Night Stadium Atmosphere - minimal premium gradients */}
@@ -384,7 +445,7 @@ export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initi
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2 }}
           >
-            {hintText ?? "Lock your picks when you’re ready."}
+            {hintText ?? (isTouchDevice ? "Tap teams to rank" : "Lock your picks when you’re ready.")}
           </motion.p>
         </AnimatePresence>
       </div>
@@ -512,13 +573,14 @@ export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initi
                         isLocked ? "is-locked" : "",
                         wiggleRow === teamIndex && isActive ? "is-click-hint" : "",
                         nudgeActive && isActive && teamIndex === 0 ? "is-nudge" : "",
+                        promoteFeedback === teamIndex && isActive ? "is-promote-feedback" : "",
                       ].filter(Boolean).join(" ")}
                       draggable={isActive && !isLocked}
                       onDragStart={(e) => handleDragStart(e, group.letter, teamIndex)}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, group.letter, teamIndex)}
                       onDragEnd={handleDragEnd}
-                      onClick={() => handleRowClick(teamIndex, team.is_placeholder, isLocked)}
+                      onClick={() => handleRowClick(group.letter, teamIndex, team.is_placeholder, isLocked)}
                     >
                       <div className="stack-drag-handle">
                         <GripVertical className="w-4 h-4" />

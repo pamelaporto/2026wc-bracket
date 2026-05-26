@@ -29,6 +29,9 @@ export function ThirdPlaceStep({
   const [activeIndex, setActiveIndex] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const touchStartY = useRef<number>(0)
+  const touchStartX = useRef<number>(0)
+  const touchStartTime = useRef<number>(0)
 
   // Comparison modal
   const [showComparison, setShowComparison] = useState(false)
@@ -97,13 +100,34 @@ export function ThirdPlaceStep({
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     if (isAnimating) return
-    
+
     if (e.deltaY > 30) {
       goToGroup(activeIndex + 1)
     } else if (e.deltaY < -30) {
       goToGroup(activeIndex - 1)
     }
   }, [activeIndex, goToGroup, isAnimating])
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY
+    touchStartX.current = e.touches[0].clientX
+    touchStartTime.current = Date.now()
+  }, [])
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const deltaY = touchStartY.current - e.changedTouches[0].clientY
+    const deltaX = touchStartX.current - e.changedTouches[0].clientX
+    const elapsed = Date.now() - touchStartTime.current
+
+    // Cancel if horizontal movement dominates — protects iOS back-swipe
+    if (Math.abs(deltaX) > Math.abs(deltaY)) return
+
+    const velocity = Math.abs(deltaY) / elapsed // px/ms
+    const threshold = velocity > 0.5 ? 20 : 40
+
+    if (deltaY > threshold) goToGroup(activeIndex + 1)
+    else if (deltaY < -threshold) goToGroup(activeIndex - 1)
+  }, [activeIndex, goToGroup])
 
   // Toggle with auto-advance
   const handleToggle = useCallback((groupLetter: string) => {
@@ -190,6 +214,8 @@ export function ThirdPlaceStep({
       className="group-stack-container"
       onWheel={handleWheel}
       onKeyDown={handleKeyDown}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       tabIndex={0}
     >
       {/* Night Stadium Atmosphere - same as group stage */}

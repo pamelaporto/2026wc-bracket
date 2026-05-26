@@ -3092,6 +3092,17 @@
     padding-right: 64px;
   }
 
+  /* Tap-to-promote feedback — brief brightness lift on tapped row */
+  .stack-team-row.is-promote-feedback {
+    animation: promote-flash 0.28s ease forwards;
+  }
+
+  @keyframes promote-flash {
+    0%   { filter: brightness(1); }
+    35%  { filter: brightness(1.22); }
+    100% { filter: brightness(1); }
+  }
+
   /* Touch targets — lock button */
   .stack-lock-btn {
     min-height: 44px;
@@ -3120,6 +3131,24 @@
 
   .tp-chips-footer {
     align-items: center;
+  }
+
+  /* Lock document height to visible viewport — eliminates native scrollbar on deck screens */
+  .wc-page {
+    height: 100dvh;
+    min-height: unset;
+    overflow: hidden;
+  }
+
+  .wc-page .page-content {
+    height: 100%;
+    min-height: unset;
+    overflow: hidden;
+  }
+
+  .stage-content-main {
+    height: 100%;
+    min-height: unset;
   }
 }
 
