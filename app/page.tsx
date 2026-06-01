@@ -9,7 +9,6 @@ import { RitualHeader, type RitualStep } from "@/components/ritual-header"
 import teamsData from "@/data/teams.json"
 import {
   rankThirdPlaceTeams,
-  resolveThirdPlaceSlots,
   type ThirdPlaceTeam,
   type RankedThirdPlaceTeam,
 } from "@/lib/thirdPlace"
@@ -34,6 +33,11 @@ type GroupsState = Record<string, TeamUI[]>
 
 const STORAGE_KEY = "wc2026-bracket-draft-v5"
 const THIRD_PLACE_KEY = "wc2026-third-place-selection-v1"
+const BRACKET_PICKS_KEY = "wc2026-bracket-picks-v1"
+const WRAPPED_NAME_KEY = "wc2026-wrapped-name-v1"
+const WRAPPED_VISITED_KEY = "wc2026-wrapped-visited-v1"
+const BRACKET_SOURCE_KEY = "wc2026-bracket-source-v1"
+const FLOW_STEP_KEY = "wc2026-flow-step-v1"
 
 function slugify(s: string) {
   return s.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w-]/g, "")
@@ -61,6 +65,9 @@ export default function Home() {
 
   // Third-place selection state
   const [selectedThirdPlaceGroups, setSelectedThirdPlaceGroups] = useState<Set<string>>(new Set())
+
+  // Confirmation modal — shown when user tries to continue past Groups with a stale bracket
+  const [showBracketResetConfirm, setShowBracketResetConfirm] = useState(false)
 
   // Always derive letters from teams.json (A–L)
   const groupLetters = useMemo(() => Object.keys((teamsData as any).groups ?? {}).sort(), [])
@@ -100,6 +107,36 @@ export default function Home() {
       }
     }
 
+    // Restore Third Place step for unfinished flows only.
+    // Conditions: step was "thirdPlace" AND third-place picks exist AND no bracket yet.
+    // Completed users (bracket exists) always return to the carousel instead.
+    const storedStep = localStorage.getItem(FLOW_STEP_KEY)
+    const hasThirdPlaceData = !!localStorage.getItem(THIRD_PLACE_KEY)
+    const hasBracket = !!localStorage.getItem(BRACKET_PICKS_KEY)
+    if (storedStep === "thirdPlace" && hasThirdPlaceData && !hasBracket) {
+      // Guard: validate the group data that will actually be used.
+      // If STORAGE_KEY is absent or corrupt (groups with < 3 teams), the merge
+      // logic would replace teamsData defaults with short arrays, leaving
+      // rankedThirdPlaceTeams empty and ThirdPlaceStep with no cards.
+      // Reuse `saved` (already parsed above) or fall back to teamsData defaults.
+      const groupsSource = (() => {
+        try {
+          const p = saved ? JSON.parse(saved) : null
+          return p && typeof p === "object" ? p : (teamsData as any).groups
+        } catch { return (teamsData as any).groups }
+      })()
+      const groupsAreValid = groupLetters.every(
+        (letter) =>
+          Array.isArray(groupsSource[letter]) &&
+          groupsSource[letter].length >= 3
+      )
+      if (groupsAreValid) {
+        setCurrentStep("thirdPlace")
+        setIntroDone(true)
+      }
+      // If invalid: fall through silently → carousel plays → user re-enters from Groups
+    }
+
   }, [groupLetters])
 
   useEffect(() => {
@@ -112,6 +149,11 @@ export default function Home() {
       localStorage.setItem(THIRD_PLACE_KEY, JSON.stringify([...selectedThirdPlaceGroups]))
     }
   }, [selectedThirdPlaceGroups, mounted])
+
+  // Persist current step so interrupted users resume in the right place
+  useEffect(() => {
+    if (mounted) localStorage.setItem(FLOW_STEP_KEY, currentStep)
+  }, [currentStep, mounted])
 
 
   // Called when a carousel card is clicked — letter is which group the user picked
@@ -204,12 +246,8 @@ export default function Home() {
   const handleContinueToRound32 = useCallback(() => {
     if (selectedThirdPlaceGroups.size !== 8) return
     
-    // Resolve slot mappings
-    const slotResult = resolveThirdPlaceSlots([...selectedThirdPlaceGroups])
-    
-    // Store the qualified teams and slot assignments
+    // Persist final third-place selection
     localStorage.setItem(THIRD_PLACE_KEY, JSON.stringify([...selectedThirdPlaceGroups]))
-    localStorage.setItem("wc2026-third-place-slots-v1", JSON.stringify(slotResult))
 
     // Navigate to bracket page
     router.push("/bracket")
@@ -227,8 +265,42 @@ export default function Home() {
   }, [])
 
   const handleContinueFromGroups = useCallback(() => {
+    const hasBracket = !!localStorage.getItem(BRACKET_PICKS_KEY)
+    if (hasBracket) {
+      const sourceRaw = localStorage.getItem(BRACKET_SOURCE_KEY)
+      if (sourceRaw) {
+        try {
+          const source = JSON.parse(sourceRaw)
+          // Groups are unchanged — safe to proceed without a warning
+          if (JSON.stringify(source) === JSON.stringify(groups)) {
+            setCurrentStep("thirdPlace")
+            return
+          }
+        } catch { /* treat as changed */ }
+      }
+      // Groups differ from snapshot (or no snapshot exists) — ask for confirmation
+      setShowBracketResetConfirm(true)
+      return
+    }
+    setCurrentStep("thirdPlace")
+  }, [groups])
+
+  // User confirmed: clear stale bracket + wrapped, then advance to Third Place
+  const handleBracketResetConfirm = useCallback(() => {
+    localStorage.removeItem(BRACKET_PICKS_KEY)
+    localStorage.removeItem(WRAPPED_NAME_KEY)
+    localStorage.removeItem(WRAPPED_VISITED_KEY)
+    localStorage.removeItem(BRACKET_SOURCE_KEY)
+    setShowBracketResetConfirm(false)
     setCurrentStep("thirdPlace")
   }, [])
+
+  // User cancelled: record current groups as the baseline so the modal
+  // doesn't reappear on the next Continue click unless picks change again
+  const handleBracketResetCancel = useCallback(() => {
+    localStorage.setItem(BRACKET_SOURCE_KEY, JSON.stringify(groups))
+    setShowBracketResetConfirm(false)
+  }, [groups])
 
   const handleResetThirdPlace = useCallback(() => {
     setSelectedThirdPlaceGroups(new Set())
@@ -397,6 +469,104 @@ export default function Home() {
           </div>
         </div>
       </div>
+      {/* ── Bracket reset confirmation modal ─────────────────────────────────
+           Shown when a user with an existing bracket tries to continue past
+           Groups after changing their group rankings. Clears only on confirm. */}
+      <AnimatePresence>
+        {showBracketResetConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: "fixed", inset: 0, zIndex: 9999,
+              background: "rgba(8,10,18,0.82)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 24,
+            }}
+            onClick={handleBracketResetCancel}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 300, damping: 28 }}
+              style={{
+                background: "linear-gradient(180deg, rgba(28,32,46,0.98) 0%, rgba(20,24,36,0.95) 100%)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 20,
+                padding: "32px 28px 28px",
+                maxWidth: 380,
+                width: "100%",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.55)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 style={{
+                margin: "0 0 10px",
+                fontSize: 18,
+                fontWeight: 700,
+                color: "rgba(255,255,255,0.95)",
+                letterSpacing: "-0.01em",
+                lineHeight: 1.3,
+                fontFamily: "inherit",
+              }}>
+                You&apos;ve changed your group predictions.
+              </h2>
+              <p style={{
+                margin: "0 0 28px",
+                fontSize: 14,
+                color: "rgba(255,255,255,0.52)",
+                lineHeight: 1.6,
+                fontFamily: "inherit",
+              }}>
+                Continuing will generate a new bracket and replace your existing prophecy.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <button
+                  onClick={handleBracketResetConfirm}
+                  style={{
+                    padding: "13px 20px",
+                    borderRadius: 10,
+                    background: "var(--wc-accent)",
+                    border: "none",
+                    color: "#0a0f00",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  Generate New Bracket
+                </button>
+                <button
+                  onClick={handleBracketResetCancel}
+                  style={{
+                    padding: "13px 20px",
+                    borderRadius: 10,
+                    background: "transparent",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    color: "rgba(255,255,255,0.65)",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                  }}
+                >
+                  Keep Existing Prophecy
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </LayoutGroup>
   )
 }

@@ -18,6 +18,26 @@ import {
 
 const STORAGE_KEY = "wc2026-bracket-draft-v5"
 const BRACKET_PICKS_KEY = "wc2026-bracket-picks-v1"
+const THIRD_PLACE_KEY = "wc2026-third-place-selection-v1"
+const BRACKET_SOURCE_KEY = "wc2026-bracket-source-v1"
+
+// All wc2026-* keys — cleared by "Start Over"
+const WC_KEYS = [
+  "wc2026-bracket-draft-v5",
+  "wc2026-third-place-selection-v1",
+  "wc2026-third-place-slots-v1",
+  "wc2026-bracket-picks-v1",
+  "wc2026-wrapped-name-v1",
+  "wc2026-wrapped-visited-v1",
+  "wc2026-lock-tooltip-dismissed",
+  "wc2026-bracket-source-v1",
+  "wc2026-flow-step-v1",
+]
+
+function clearAllData() {
+  WC_KEYS.forEach((k) => localStorage.removeItem(k))
+  window.location.href = "/"
+}
 
 type GroupsState = Record<string, any[]>
 
@@ -35,12 +55,27 @@ export default function BracketPage() {
   const [bracket, setBracket] = useState<BracketState | null>(null)
 
   useEffect(() => {
+    // Guard: Third Place must be complete (8 groups selected) before the
+    // bracket is accessible. Prevents stale bracket data from bypassing the flow.
+    const thirdPlaceRaw = localStorage.getItem(THIRD_PLACE_KEY)
+    let thirdPlaceValid = false
+    if (thirdPlaceRaw) {
+      try {
+        const parsed = JSON.parse(thirdPlaceRaw)
+        if (Array.isArray(parsed) && parsed.length >= 8) thirdPlaceValid = true
+      } catch { /* ignore */ }
+    }
+    if (!thirdPlaceValid) {
+      router.replace("/")
+      return // ready stays false → blank screen while redirecting
+    }
+
     const groupData = localStorage.getItem(STORAGE_KEY)
     if (groupData) {
       try { setGroups(JSON.parse(groupData)) } catch { /* ignore */ }
     }
     setReady(true)
-  }, [])
+  }, [router])
 
   useEffect(() => {
     if (!groups) return
@@ -48,6 +83,9 @@ export default function BracketPage() {
     if (savedPicks) {
       try { setBracket(JSON.parse(savedPicks)); return } catch { /* ignore */ }
     }
+    // Fresh bracket — record which group rankings it was built from.
+    // This snapshot is read by app/page.tsx to detect ranking changes.
+    localStorage.setItem(BRACKET_SOURCE_KEY, JSON.stringify(groups))
     setBracket(initializeBracket(groups))
   }, [groups])
 
@@ -158,6 +196,13 @@ export default function BracketPage() {
           ) : undefined}
         />
 
+        {/* New Prophecy — subtle persistent action for returning users */}
+        <div className="bk-actions-row">
+          <button className="bk-new-prophecy-btn" onClick={clearAllData}>
+            New Prophecy
+          </button>
+        </div>
+
         {/* Champion hero card */}
         <AnimatePresence>
           {bracket.champion && (
@@ -207,6 +252,10 @@ export default function BracketPage() {
                     <span>Reveal Your Prophecy</span>
                     <ArrowRight size={15} />
                   </a>
+
+                  <button className="bk-champion-start-over" onClick={clearAllData}>
+                    Start over
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -314,6 +363,47 @@ export default function BracketPage() {
           padding-top: 92px; /* 68px nav clearance + 24px breathing room */
           background: var(--bg-base);
           color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* ── New Prophecy action row ── */
+        .bk-actions-row {
+          flex-shrink: 0;
+          display: flex;
+          justify-content: flex-end;
+          padding: 8px 28px 0;
+        }
+        .bk-new-prophecy-btn {
+          background: none;
+          border: none;
+          color: rgba(255, 255, 255, 0.22);
+          font-size: 11px;
+          font-family: inherit;
+          font-weight: 500;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          cursor: pointer;
+          padding: 6px 0;
+          transition: color 0.15s ease;
+        }
+        .bk-new-prophecy-btn:hover {
+          color: rgba(255, 255, 255, 0.48);
+        }
+
+        /* ── Champion card "Start over" secondary action ── */
+        .bk-champion-start-over {
+          background: none;
+          border: none;
+          color: rgba(255, 255, 255, 0.25);
+          font-size: 12px;
+          font-family: inherit;
+          cursor: pointer;
+          padding: 4px 0;
+          margin-top: 2px;
+          letter-spacing: 0.02em;
+          transition: color 0.15s ease;
+        }
+        .bk-champion-start-over:hover {
+          color: rgba(255, 255, 255, 0.5);
         }
 
         /* ── Mini champion badge (rightExtra slot in nav) — status chip, not CTA ── */

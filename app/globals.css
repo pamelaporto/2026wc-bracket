@@ -3092,15 +3092,64 @@
     padding-right: 64px;
   }
 
-  /* Tap-to-promote feedback — brief brightness lift on tapped row */
+  /* Tap-to-promote feedback — brightness lift + name accent flash */
   .stack-team-row.is-promote-feedback {
-    animation: promote-flash 0.28s ease forwards;
+    animation: promote-flash 0.22s ease forwards;
+  }
+
+  .stack-team-row.is-promote-feedback .stack-team-name {
+    animation: promote-name-flash 0.22s ease forwards;
   }
 
   @keyframes promote-flash {
-    0%   { filter: brightness(1); }
-    35%  { filter: brightness(1.22); }
-    100% { filter: brightness(1); }
+    0%   { filter: brightness(1);    transform: scale(1);    }
+    25%  { filter: brightness(1.18); transform: scale(1.01); }
+    100% { filter: brightness(1);    transform: scale(1);    }
+  }
+
+  @keyframes promote-name-flash {
+    0%   { color: rgba(255, 255, 255, 0.9); }
+    25%  { color: var(--wc-accent);         }
+    100% { color: rgba(255, 255, 255, 0.9); }
+  }
+
+  /* Tap interaction — suppress drag cursors, tune handle opacity for chevron */
+  .stack-team-row[draggable="true"] {
+    cursor: default;
+  }
+
+  .stack-drag-handle {
+    cursor: default;
+    opacity: 0.30;
+  }
+
+  /* Rank direction tag — flex wrapper + low-opacity mono label */
+  .stack-team-name-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .stack-team-name-cell .stack-team-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .stack-rank-tag {
+    font-family: var(--font-jakarta), system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.42);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: 8px;
+    pointer-events: none;
+    user-select: none;
   }
 
   /* Touch targets — lock button */
@@ -3432,6 +3481,10 @@
   .ritual-header__right {
     flex: 0 0 auto;
   }
+
+  .ritual-header__right {
+    min-width: 44px;
+  }
   
   .ritual-nav-label {
     display: none;
@@ -3450,6 +3503,31 @@
 
   .ritual-title {
     font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .ritual-title-step {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    line-height: 1.2;
+    font-size: 13px;
+  }
+
+  .ritual-title-sep {
+    display: none;
+  }
+
+  .ritual-title-series {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.28);
+    line-height: 1;
   }
 
   .ritual-instruction {
@@ -3460,6 +3538,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-width: 0;
+    overflow: hidden;
   }
   
   .ritual-logo-img {

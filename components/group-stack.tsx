@@ -3,7 +3,7 @@
 import type React from "react"
 import { useRef, useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence, useMotionValue, useSpring, animate } from "framer-motion"
-import { ChevronDown, GripVertical, Lock, Unlock } from "lucide-react"
+import { ChevronDown, ChevronUp, GripVertical, Lock, Unlock } from "lucide-react"
 import { createPortal } from "react-dom"
 import { computeFlagGradient } from "@/lib/flags"
 
@@ -141,7 +141,7 @@ export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initi
     const t = setTimeout(() => {
       if (!hasInteractedRef.current) {
         setNudgeActive(true)
-        setHintText("Drag teams up or down to rank them")
+        setHintText(isTouchDevice ? "Tap teams to rank" : "Drag teams up or down to rank them")
         setTimeout(() => {
           setNudgeActive(false)
           setHintText(null)
@@ -257,19 +257,27 @@ export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initi
     if (now - promoteLastTap.current < 150) return  // debounce rapid taps
     promoteLastTap.current = now
 
-    // Flash feedback on tapped row regardless of position
+    // Fire feedback immediately — reorder deferred so confirmation lands first
     setPromoteFeedback(teamIndex)
-    setTimeout(() => setPromoteFeedback(null), 280)
-
-    if (teamIndex === 0) return  // already at top — feedback only, no reorder
 
     const group = groups.find(g => g.letter === groupLetter)
     if (!group) return
 
     const newTeams = [...group.teams]
-    // Swap tapped team with the one directly above it
-    ;[newTeams[teamIndex - 1], newTeams[teamIndex]] = [newTeams[teamIndex], newTeams[teamIndex - 1]]
-    onTeamsReorder(groupLetter, newTeams)
+
+    if (teamIndex === 0) {
+      // Row 1: move DOWN — swap with index 1
+      ;[newTeams[0], newTeams[1]] = [newTeams[1], newTeams[0]]
+    } else {
+      // Rows 2–4: move UP — swap with index above
+      ;[newTeams[teamIndex - 1], newTeams[teamIndex]] = [newTeams[teamIndex], newTeams[teamIndex - 1]]
+    }
+
+    // Defer reorder ~60ms so the brightness/name flash is perceived first
+    setTimeout(() => {
+      onTeamsReorder(groupLetter, newTeams)
+      setTimeout(() => setPromoteFeedback(null), 220)
+    }, 60)
   }, [groups, onTeamsReorder])
 
   // Row click handler — promotes on mobile, teaches drag on desktop
@@ -583,7 +591,11 @@ export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initi
                       onClick={() => handleRowClick(group.letter, teamIndex, team.is_placeholder, isLocked)}
                     >
                       <div className="stack-drag-handle">
-                        <GripVertical className="w-4 h-4" />
+                        {isTouchDevice ? (
+                          teamIndex > 0 ? <ChevronUp className="w-3 h-3" /> : null
+                        ) : (
+                          <GripVertical className="w-4 h-4" />
+                        )}
                       </div>
                       
                       <div className="stack-pos-pill">
@@ -648,7 +660,14 @@ export function GroupStack({ groups, onTeamsReorder, onLockedGroupsChange, initi
                           )}
                         </div>
                       ) : (
-                        <span className="stack-team-name">{team.name}</span>
+                        <span className="stack-team-name-cell">
+                          <span className="stack-team-name">{team.name}</span>
+                          {isTouchDevice && !isLocked && (
+                            <span className="stack-rank-tag" aria-hidden="true">
+                              {teamIndex === 0 ? "↓ DOWN" : "↑ UP"}
+                            </span>
+                          )}
+                        </span>
                       )}
                     </div>
                   )
