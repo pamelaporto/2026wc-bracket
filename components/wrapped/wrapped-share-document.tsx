@@ -1,11 +1,30 @@
 "use client"
 
-import { useCallback } from "react"
+import { useState, useCallback } from "react"
 import { Share2, RotateCcw, Trophy } from "lucide-react"
 import { computeFlagGradient } from "@/lib/flags"
 import type { WrappedProfile } from "@/lib/wrapped-engine"
 import type { BracketState, QualifiedTeam, GroupsState } from "@/lib/build-bracket"
 import { copyToClipboard } from "@/lib/share"
+
+// ─── Reset helper ────────────────────────────────────────────────────────────
+
+const WC_KEYS = [
+  "wc2026-bracket-draft-v5",
+  "wc2026-third-place-selection-v1",
+  "wc2026-third-place-slots-v1",
+  "wc2026-bracket-picks-v1",
+  "wc2026-wrapped-name-v1",
+  "wc2026-wrapped-visited-v1",
+  "wc2026-lock-tooltip-dismissed",
+  "wc2026-bracket-source-v1",
+  "wc2026-flow-step-v1",
+]
+
+function clearAllData() {
+  WC_KEYS.forEach((k) => localStorage.removeItem(k))
+  window.location.href = "/"
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,9 +97,9 @@ export function WrappedShareDocument({
   advancingThirdGroups,
   onReplay,
 }: Props) {
-  const origin = typeof window !== "undefined" ? window.location.origin : ""
+  const shareMessage = `My World Cup 2026 Prophecy:\n🏆 Champion: ${profile.champion?.name ?? "TBD"}\n🎭 ${profile.personalityArchetype}\n"${profile.headline}"\n\nPick yours → https://futbolmode.com`
 
-  const shareMessage = `My World Cup 2026 Prophecy:\n🏆 Champion: ${profile.champion?.name ?? "TBD"}\n🎭 ${profile.personalityArchetype}\n"${profile.headline}"\n\nPick yours → ${origin}`
+  const [copied, setCopied] = useState(false)
 
   const handleShare = useCallback(async () => {
     if (navigator.share) {
@@ -88,12 +107,17 @@ export function WrappedShareDocument({
         await navigator.share({
           title: "My World Cup 2026 Prophecy",
           text: shareMessage,
+          url: "https://futbolmode.com",
         })
-      } catch { /* user dismissed */ }
+      } catch { /* user cancelled */ }
     } else {
-      await copyToClipboard(shareMessage)
+      const ok = await copyToClipboard(shareMessage)
+      if (ok) {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2200)
+      }
     }
-  }, [shareMessage, origin])
+  }, [shareMessage])
 
   const timestamp = new Date().toLocaleDateString("en-GB", {
     day: "numeric",
@@ -266,11 +290,14 @@ export function WrappedShareDocument({
         <div className="wrs-doc-actions">
           <button className="wrs-doc-share-btn" onClick={handleShare}>
             <Share2 size={15} />
-            <span>Share Your Prophecy</span>
+            <span>{copied ? "Copied!" : "Share Your Prophecy"}</span>
           </button>
           <button className="wrs-doc-replay-btn" onClick={onReplay}>
             <RotateCcw size={13} />
             <span>Replay</span>
+          </button>
+          <button className="wrs-doc-replay-btn" onClick={clearAllData}>
+            <span>Create Another Prophecy</span>
           </button>
         </div>
 

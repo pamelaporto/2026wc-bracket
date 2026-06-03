@@ -1311,6 +1311,7 @@
   gap: 8px;
   justify-content: flex-start;
   padding: 0 4px;
+  min-width: 0;
 }
 
 .bracket-slot-right {
