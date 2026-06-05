@@ -196,7 +196,7 @@ function renderCard(card: ShareCard) {
           {/* If only champion is known */}
           {!hasFinal && !hasSemis && card.champion && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <span style={{ color: MUTED, fontSize: 13 }}>Complete your bracket to reveal the full prophecy.</span>
+              <span style={{ color: MUTED, fontSize: 13 }}>Complete your bracket to reveal the full prediction.</span>
             </div>
           )}
         </div>

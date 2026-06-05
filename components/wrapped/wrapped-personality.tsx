@@ -14,7 +14,7 @@ const ARCHETYPE_COLORS: Record<PersonalityArchetype, string> = {
   "Chaos Agent": "#FF4D4D",
   "The Contrarian": "#C084FC",
   "The Loyalist": "#60A5FA",
-  "The Prophet": "#34D399",
+  "The Oracle": "#34D399",
   "The Traditionalist": "#94A3B8",
   "The Romantic": "#FB923C",
 }

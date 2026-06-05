@@ -97,7 +97,7 @@ export function WrappedShareDocument({
   advancingThirdGroups,
   onReplay,
 }: Props) {
-  const shareMessage = `My World Cup 2026 Prophecy:\n🏆 Champion: ${profile.champion?.name ?? "TBD"}\n🎭 ${profile.personalityArchetype}\n"${profile.headline}"\n\nPick yours → https://futbolmode.com`
+  const shareMessage = `My World Cup 2026 Prediction:\n🏆 Champion: ${profile.champion?.name ?? "TBD"}\n🎭 ${profile.personalityArchetype}\n"${profile.headline}"\n\nPick yours → https://futbolmode.com`
 
   const [copied, setCopied] = useState(false)
 
@@ -105,7 +105,7 @@ export function WrappedShareDocument({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "My World Cup 2026 Prophecy",
+          title: "My World Cup 2026 Prediction",
           text: shareMessage,
           url: "https://futbolmode.com",
         })
@@ -156,7 +156,7 @@ export function WrappedShareDocument({
           <span className="wrs-doc-identity-brand">FUTBOL MODE</span>
           <div className="wrs-doc-identity-row">
             <div>
-              <h1 className="wrs-doc-identity-name">{profile.displayName}&apos;s Prophecy</h1>
+              <h1 className="wrs-doc-identity-name">{profile.displayName}&apos;s Prediction</h1>
               <p className="wrs-doc-identity-meta">
                 {timestamp}&ensp;·&ensp;{profile.personalityArchetype}
               </p>
@@ -290,14 +290,14 @@ export function WrappedShareDocument({
         <div className="wrs-doc-actions">
           <button className="wrs-doc-share-btn" onClick={handleShare}>
             <Share2 size={15} />
-            <span>{copied ? "Copied!" : "Share Your Prophecy"}</span>
+            <span>{copied ? "Copied!" : "Share Your Prediction"}</span>
           </button>
           <button className="wrs-doc-replay-btn" onClick={onReplay}>
             <RotateCcw size={13} />
             <span>Replay</span>
           </button>
           <button className="wrs-doc-replay-btn" onClick={clearAllData}>
-            <span>Create Another Prophecy</span>
+            <span>Create Another Prediction</span>
           </button>
         </div>
 

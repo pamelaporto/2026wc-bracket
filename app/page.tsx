@@ -155,7 +155,6 @@ export default function Home() {
     if (mounted) localStorage.setItem(FLOW_STEP_KEY, currentStep)
   }, [currentStep, mounted])
 
-
   // Called when a carousel card is clicked — letter is which group the user picked
   const handleCarouselSelect = useCallback((letter: string) => {
     setInitialGroupLetter(letter)
@@ -216,6 +215,29 @@ export default function Home() {
     }
   }, [currentStep, groupLetters, groupsUI, rankedThirdPlaceTeams])
 
+  // Gracefully recover from corrupted group data in Third Place
+  useEffect(() => {
+    if (!mounted) return
+
+    if (currentStep === "thirdPlace" && rankedThirdPlaceTeams.length === 0) {
+      // Check if groups data is actually valid (not a temporary stale closure)
+      const hasValidGroups =
+        Object.keys(groups).length === 12 &&
+        Object.values(groups).every(
+          (group) => Array.isArray(group) && group.length >= 3
+        )
+
+      // Only recover if groups are INVALID (not just temporarily 0 during navigation)
+      if (!hasValidGroups) {
+        // Groups are genuinely corrupt: clear and return user to Groups for a fresh start.
+        localStorage.removeItem(STORAGE_KEY)
+        localStorage.removeItem(THIRD_PLACE_KEY)
+        setCurrentStep("groups")
+        setIntroDone(true)
+      }
+    }
+  }, [mounted, currentStep, rankedThirdPlaceTeams.length, groups])
+
   const completedGroups = useMemo(() => {
     return groupLetters.reduce((count, letter) => {
       const teams = groupsUI[letter] ?? []
@@ -245,9 +267,12 @@ export default function Home() {
 
   const handleContinueToRound32 = useCallback(() => {
     if (selectedThirdPlaceGroups.size !== 8) return
-    
+
     // Persist final third-place selection
     localStorage.setItem(THIRD_PLACE_KEY, JSON.stringify([...selectedThirdPlaceGroups]))
+
+    // Clear the flow step so it doesn't stay "thirdPlace" when returning to /
+    localStorage.removeItem(FLOW_STEP_KEY)
 
     // Navigate to bracket page
     router.push("/bracket")
@@ -525,7 +550,7 @@ export default function Home() {
                 lineHeight: 1.6,
                 fontFamily: "inherit",
               }}>
-                Continuing will generate a new bracket and replace your existing prophecy.
+                Continuing will generate a new bracket and replace your existing prediction.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <button
@@ -559,7 +584,7 @@ export default function Home() {
                     cursor: "pointer",
                   }}
                 >
-                  Keep Existing Prophecy
+                  Keep Existing Prediction
                 </button>
               </div>
             </motion.div>

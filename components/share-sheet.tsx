@@ -31,7 +31,7 @@ export function ShareSheet({ card, isOpen, onClose }: ShareSheetProps) {
     if (!navigator.share) return
     try {
       await navigator.share({
-        title: "My FIFA World Cup 2026 Prophecy",
+        title: "My FIFA World Cup 2026 Prediction",
         text: card.champion
           ? `I predicted ${card.champion.name} will win the 2026 World Cup!`
           : "My World Cup 2026 bracket prediction",
@@ -66,7 +66,7 @@ export function ShareSheet({ card, isOpen, onClose }: ShareSheetProps) {
             {/* Header */}
             <div className="ss-header">
               <div className="ss-header-text">
-                <span className="ss-eyebrow">Your Prophecy</span>
+                <span className="ss-eyebrow">Your Prediction</span>
                 <h2 className="ss-title">Download & Share</h2>
               </div>
               <button className="ss-close" onClick={onClose} aria-label="Close">

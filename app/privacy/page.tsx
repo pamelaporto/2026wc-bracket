@@ -65,7 +65,7 @@ export default function PrivacyPage() {
             <h2>Sharing</h2>
             <p>
               Futbol Mode includes optional sharing features. When you use "Share Your
-              Prophecy," content is passed to your device's native share dialog or copied
+              Prediction," content is passed to your device's native share dialog or copied
               to your clipboard. Sharing may take you outside of Futbol Mode to third-party
               platforms, which have their own privacy policies.
             </p>

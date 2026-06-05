@@ -63,7 +63,7 @@ export type PersonalityArchetype =
   | "Chaos Agent"
   | "The Contrarian"
   | "The Loyalist"
-  | "The Prophet"
+  | "The Oracle"
   | "The Traditionalist"
   | "The Romantic"
 
@@ -144,7 +144,7 @@ function deriveArchetype(
   dominantCount: number
 ): PersonalityArchetype {
   if (volatility > 0.55) return "Chaos Agent"
-  if (champConf === "AFC" || champConf === "OFC" || champConf === "CAF") return "The Prophet"
+  if (champConf === "AFC" || champConf === "OFC" || champConf === "CAF") return "The Oracle"
   if (dominantCount >= 3 && (dominantConf === "CONMEBOL" || dominantConf === "UEFA"))
     return "The Loyalist"
   if (champion.position !== 1 || upsets > 5) return "The Contrarian"
@@ -156,7 +156,7 @@ const ARCHETYPE_TAGLINES: Record<PersonalityArchetype, string> = {
   "Chaos Agent": "You trust no seed and fear no giant. Pure anarchy.",
   "The Contrarian": "You see what others miss. The underdog always had a chance.",
   "The Loyalist": "Your bracket is a love letter to one corner of the world.",
-  "The Prophet": "You believed before anyone else. History will remember.",
+  "The Oracle": "You believed before anyone else. History will remember.",
   "The Traditionalist": "Form is form. You don't gamble on miracles.",
   "The Romantic": "Football, beautiful and unpredictable. Just like your picks.",
 }
@@ -173,7 +173,7 @@ function deriveHeadline(
   const opp = finalOpponent?.name ?? "the world"
 
   switch (archetype) {
-    case "The Prophet":
+    case "The Oracle":
       return `You saw ${c} coming. Nobody else did.`
     case "Chaos Agent":
       return `Your bracket is a beautiful disaster. ${c} somehow lifts the trophy.`

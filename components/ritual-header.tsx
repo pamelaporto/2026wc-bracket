@@ -25,7 +25,7 @@ const STEP_CONTENT: Record<RitualStep, StepContent> = {
     series: "FIFA World Cup 2026",
   },
   wrap: {
-    step: "Your prophecy complete",
+    step: "Your prediction complete",
     series: "World Cup 2026",
   },
 }
