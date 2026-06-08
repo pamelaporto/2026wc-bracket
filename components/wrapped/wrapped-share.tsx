@@ -98,7 +98,7 @@ export function WrappedShare({ profile, bracket, onReplay }: Props) {
             whileTap={{ scale: 0.97 }}
           >
             <Download className="w-4 h-4" />
-            <span>Download &amp; Share Your Prediction</span>
+            <span>Download &amp; share your prediction</span>
           </motion.button>
 
           <button className="wr-replay-btn" onClick={onReplay}>

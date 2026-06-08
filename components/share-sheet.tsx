@@ -67,7 +67,7 @@ export function ShareSheet({ card, isOpen, onClose }: ShareSheetProps) {
             <div className="ss-header">
               <div className="ss-header-text">
                 <span className="ss-eyebrow">Your Prediction</span>
-                <h2 className="ss-title">Download & Share</h2>
+                <h2 className="ss-title">Download & share</h2>
               </div>
               <button className="ss-close" onClick={onClose} aria-label="Close">
                 <X size={16} />
@@ -101,7 +101,7 @@ export function ShareSheet({ card, isOpen, onClose }: ShareSheetProps) {
                 rel="noopener noreferrer"
               >
                 <Download size={16} />
-                <span>Download Image</span>
+                <span>Download image</span>
               </a>
 
               {/* Copy link */}

@@ -290,14 +290,14 @@ export function WrappedShareDocument({
         <div className="wrs-doc-actions">
           <button className="wrs-doc-share-btn" onClick={handleShare}>
             <Share2 size={15} />
-            <span>{copied ? "Copied!" : "Share Your Prediction"}</span>
+            <span>{copied ? "Copied!" : "Share your prediction"}</span>
           </button>
           <button className="wrs-doc-replay-btn" onClick={onReplay}>
             <RotateCcw size={13} />
             <span>Replay</span>
           </button>
           <button className="wrs-doc-replay-btn" onClick={clearAllData}>
-            <span>Create Another Prediction</span>
+            <span>Create another prediction</span>
           </button>
         </div>
 

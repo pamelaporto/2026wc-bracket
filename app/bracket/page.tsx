@@ -199,7 +199,7 @@ export default function BracketPage() {
         {/* New Prophecy — subtle persistent action for returning users */}
         <div className="bk-actions-row">
           <button className="bk-new-prophecy-btn" onClick={clearAllData}>
-            New Prediction
+            New prediction
           </button>
         </div>
 
@@ -249,7 +249,7 @@ export default function BracketPage() {
 
                   {/* CTAs */}
                   <a href="/wrapped" className="bk-champion-cta">
-                    <span>Reveal Your Prediction</span>
+                    <span>Reveal your prediction</span>
                     <ArrowRight size={15} />
                   </a>
 

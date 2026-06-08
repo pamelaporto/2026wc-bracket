@@ -316,16 +316,16 @@ export default function Home() {
     localStorage.removeItem(WRAPPED_NAME_KEY)
     localStorage.removeItem(WRAPPED_VISITED_KEY)
     localStorage.removeItem(BRACKET_SOURCE_KEY)
+    localStorage.removeItem(THIRD_PLACE_KEY)
     setShowBracketResetConfirm(false)
     setCurrentStep("thirdPlace")
   }, [])
 
-  // User cancelled: record current groups as the baseline so the modal
-  // doesn't reappear on the next Continue click unless picks change again
+  // User chose "Keep existing prediction": navigate directly to the saved bracket
   const handleBracketResetCancel = useCallback(() => {
-    localStorage.setItem(BRACKET_SOURCE_KEY, JSON.stringify(groups))
     setShowBracketResetConfirm(false)
-  }, [groups])
+    router.push("/bracket")
+  }, [router])
 
   const handleResetThirdPlace = useCallback(() => {
     setSelectedThirdPlaceGroups(new Set())
@@ -568,7 +568,7 @@ export default function Home() {
                     letterSpacing: "0.01em",
                   }}
                 >
-                  Generate New Bracket
+                  Generate new bracket
                 </button>
                 <button
                   onClick={handleBracketResetCancel}
@@ -584,7 +584,7 @@ export default function Home() {
                     cursor: "pointer",
                   }}
                 >
-                  Keep Existing Prediction
+                  Keep existing prediction
                 </button>
               </div>
             </motion.div>
