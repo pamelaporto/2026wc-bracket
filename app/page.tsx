@@ -215,29 +215,6 @@ export default function Home() {
     }
   }, [currentStep, groupLetters, groupsUI, rankedThirdPlaceTeams])
 
-  // Gracefully recover from corrupted group data in Third Place
-  useEffect(() => {
-    if (!mounted) return
-
-    if (currentStep === "thirdPlace" && rankedThirdPlaceTeams.length === 0) {
-      // Check if groups data is actually valid (not a temporary stale closure)
-      const hasValidGroups =
-        Object.keys(groups).length === 12 &&
-        Object.values(groups).every(
-          (group) => Array.isArray(group) && group.length >= 3
-        )
-
-      // Only recover if groups are INVALID (not just temporarily 0 during navigation)
-      if (!hasValidGroups) {
-        // Groups are genuinely corrupt: clear and return user to Groups for a fresh start.
-        localStorage.removeItem(STORAGE_KEY)
-        localStorage.removeItem(THIRD_PLACE_KEY)
-        setCurrentStep("groups")
-        setIntroDone(true)
-      }
-    }
-  }, [mounted, currentStep, rankedThirdPlaceTeams.length, groups])
-
   const completedGroups = useMemo(() => {
     return groupLetters.reduce((count, letter) => {
       const teams = groupsUI[letter] ?? []
@@ -415,6 +392,8 @@ export default function Home() {
               Independent fan-made experience. Not affiliated with FIFA.
               <span className="ci-disclaimer-sep" aria-hidden="true"> · </span>
               <a href="/privacy" className="ci-disclaimer-link">Privacy Policy</a>
+              <span className="ci-disclaimer-sep" aria-hidden="true"> · </span>
+              <a href="https://www.linkedin.com/in/pamelaporto/" target="_blank" rel="noopener noreferrer" className="ci-disclaimer-link">Created by Pamela Porto</a>
             </motion.div>
 
           </div>

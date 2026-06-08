@@ -301,6 +301,19 @@ export function WrappedShareDocument({
           </button>
         </div>
 
+        {/* ── Creator Signature ── */}
+        <div className="wrs-doc-creator">
+          <img src="/pamela-porto-headshot.jpg" alt="Pamela Porto" className="wrs-doc-creator-image" />
+          <div className="wrs-doc-creator-label">FROM THE CREATOR</div>
+          <div className="wrs-doc-creator-name">Pamela Porto</div>
+          <p className="wrs-doc-creator-text">
+            Futbol Mode was created as a side project for World Cup 2026.
+          </p>
+          <a href="https://www.linkedin.com/in/pamelaporto/" target="_blank" rel="noopener noreferrer" className="wrs-doc-creator-link">
+            Connect on LinkedIn
+          </a>
+        </div>
+
       </div>
     </div>
   )
