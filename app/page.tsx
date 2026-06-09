@@ -113,6 +113,7 @@ export default function Home() {
     const storedStep = localStorage.getItem(FLOW_STEP_KEY)
     const hasThirdPlaceData = !!localStorage.getItem(THIRD_PLACE_KEY)
     const hasBracket = !!localStorage.getItem(BRACKET_PICKS_KEY)
+
     if (storedStep === "thirdPlace" && hasThirdPlaceData && !hasBracket) {
       // Guard: validate the group data that will actually be used.
       // If STORAGE_KEY is absent or corrupt (groups with < 3 teams), the merge
@@ -149,11 +150,6 @@ export default function Home() {
       localStorage.setItem(THIRD_PLACE_KEY, JSON.stringify([...selectedThirdPlaceGroups]))
     }
   }, [selectedThirdPlaceGroups, mounted])
-
-  // Persist current step so interrupted users resume in the right place
-  useEffect(() => {
-    if (mounted) localStorage.setItem(FLOW_STEP_KEY, currentStep)
-  }, [currentStep, mounted])
 
   // Called when a carousel card is clicked — letter is which group the user picked
   const handleCarouselSelect = useCallback((letter: string) => {
@@ -201,19 +197,16 @@ export default function Home() {
         }
       })
       .filter((t): t is ThirdPlaceTeam => t !== null)
-    return rankThirdPlaceTeams(thirdPlaceTeams)
+    const result = rankThirdPlaceTeams(thirdPlaceTeams)
+    return result
   }, [groupLetters, groupsUI])
 
+  // Persist current step so interrupted users resume in the right place
   useEffect(() => {
-    if (currentStep === "thirdPlace") {
-      console.log("[ThirdPlace Debug]", {
-        currentStep,
-        groupLettersLength: groupLetters.length,
-        groupsUIKeys: Object.keys(groupsUI).sort(),
-        rankedThirdPlaceTeamsLength: rankedThirdPlaceTeams.length,
-      })
+    if (mounted) {
+      localStorage.setItem(FLOW_STEP_KEY, currentStep)
     }
-  }, [currentStep, groupLetters, groupsUI, rankedThirdPlaceTeams])
+  }, [currentStep, mounted, selectedThirdPlaceGroups.size, rankedThirdPlaceTeams.length])
 
   const completedGroups = useMemo(() => {
     return groupLetters.reduce((count, letter) => {
@@ -268,6 +261,7 @@ export default function Home() {
 
   const handleContinueFromGroups = useCallback(() => {
     const hasBracket = !!localStorage.getItem(BRACKET_PICKS_KEY)
+
     if (hasBracket) {
       const sourceRaw = localStorage.getItem(BRACKET_SOURCE_KEY)
       if (sourceRaw) {
@@ -285,7 +279,7 @@ export default function Home() {
       return
     }
     setCurrentStep("thirdPlace")
-  }, [groups])
+  }, [groups, selectedThirdPlaceGroups.size, rankedThirdPlaceTeams.length, currentStep, lockedGroupsCount])
 
   // User confirmed: clear stale bracket + wrapped, then advance to Third Place
   const handleBracketResetConfirm = useCallback(() => {
@@ -294,9 +288,11 @@ export default function Home() {
     localStorage.removeItem(WRAPPED_VISITED_KEY)
     localStorage.removeItem(BRACKET_SOURCE_KEY)
     localStorage.removeItem(THIRD_PLACE_KEY)
+    // Reset Third Place selection state to match cleared localStorage
+    setSelectedThirdPlaceGroups(new Set())
     setShowBracketResetConfirm(false)
     setCurrentStep("thirdPlace")
-  }, [])
+  }, [selectedThirdPlaceGroups.size, currentStep])
 
   // User chose "Keep existing prediction": navigate directly to the saved bracket
   const handleBracketResetCancel = useCallback(() => {
@@ -428,8 +424,8 @@ export default function Home() {
           )}
           
           <div className="stage-content-main max-w-[1400px] mx-auto">
-            <AnimatePresence mode="wait">
-              {introDone && currentStep === "groups" && (
+            {introDone && currentStep === "groups" && (
+              <AnimatePresence mode="wait">
                 <motion.div
                   key="groups-step"
                   initial={{ opacity: 0 }}
@@ -448,9 +444,11 @@ export default function Home() {
                     initialGroupLetter={initialGroupLetter}
                   />
                 </motion.div>
-              )}
+              </AnimatePresence>
+            )}
 
-              {introDone && currentStep === "thirdPlace" && (
+            {introDone && currentStep === "thirdPlace" && (
+              <AnimatePresence mode="wait">
                 <motion.div
                   key="third-place-step"
                   className="h-full"
@@ -468,8 +466,8 @@ export default function Home() {
                     onBack={handleBackToGroups}
                   />
                 </motion.div>
-              )}
-            </AnimatePresence>
+              </AnimatePresence>
+            )}
           </div>
         </div>
       </div>

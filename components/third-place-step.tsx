@@ -41,7 +41,7 @@ export function ThirdPlaceStep({
   
   // Sort teams by group letter A→L (stable order)
   const sortedTeams = useMemo(() => {
-    const teamMap = new Map(teams.map((t) => [t.groupLetter, t]))
+    const teamMap = new Map(teams.map((t) => [t.groupLetter.toUpperCase(), t]))
     return GROUP_ORDER.map((letter) => teamMap.get(letter)).filter(Boolean) as RankedThirdPlaceTeam[]
   }, [teams])
 
