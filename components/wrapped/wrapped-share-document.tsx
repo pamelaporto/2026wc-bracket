@@ -97,7 +97,32 @@ export function WrappedShareDocument({
   advancingThirdGroups,
   onReplay,
 }: Props) {
-  const shareMessage = `🏆 Champion: ${profile.champion?.name ?? "TBD"}\n🎭 ${profile.personalityArchetype}\n"${profile.headline}"\n\nPick yours → https://futbolmode.com`
+  const timestamp = new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+
+  const finalMatch = bracket.matches.find(m => m.round === 5)
+  const semiFinalistNames = profile.semiFinalists.map(t => t.name).join(" • ") || "TBD"
+
+  const shareMessage = `FUTBOL MODE
+World Cup 2026 Prediction
+USA • Canada • Mexico
+
+${profile.displayName}'s Prediction
+
+🏆 Champion
+${profile.champion?.name ?? "TBD"}
+${profile.champion?.colors ? "" : ""}
+${finalMatch?.team1 && finalMatch?.team2 ? `\nFinal\n${finalMatch.team1.name} vs ${finalMatch.team2.name}` : ""}
+
+${profile.semiFinalists.length > 0 ? `Semi-finalists\n${semiFinalistNames}\n` : ""}
+${profile.personalityArchetype}
+"${profile.headline}"
+
+Created ${timestamp}
+futbolmode.com`
 
   const [copied, setCopied] = useState(false)
 
@@ -117,12 +142,6 @@ export function WrappedShareDocument({
       }
     }
   }, [shareMessage])
-
-  const timestamp = new Date().toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })
 
   // ── Third-place list: advancing first, then rest alphabetically ──
   const thirdPlaceRows = groupsState
