@@ -1,5 +1,7 @@
 // lib/build-bracket.ts
 
+import { resolveThirdPlaceSlots } from "@/lib/thirdPlace"
+
 export type TeamUI = {
   id: string
   name: string
@@ -105,35 +107,52 @@ export function rankThirdPlaceTeams(thirdPlaceTeams: QualifiedTeam[]): Qualified
 }
 
 /**
- * FIFA 2026 Round of 32 pairing structure
- * This follows a balanced seeding approach:
- * - Group winners face third-place or runners-up
- * - Minimizes same-group rematches in early rounds
+ * Official FIFA 2026 Round of 32 bracket structure (Matches 73-88)
+ * Source: FIFA 2026 Tournament Regulations
+ *
+ * Key features:
+ * - Group winners A, B, D, E, G, I, K, L face third-place teams (no same-group rematches)
+ * - Group winners C, F, H, J face specific runners-up
+ * - All runners-up are allocated to specific matches
+ * - Third-place allocation via official FIFA matrix (lib/thirdPlace.ts)
  */
 const R32_PAIRINGS: Array<{ slot1: string; slot2: string }> = [
-  // Left bracket (matches 0-7)
-  { slot1: "A1", slot2: "3rd-1" },  // Winner A vs Best 3rd #1
-  { slot1: "C2", slot2: "D2" },     // Runner C vs Runner D
-  { slot1: "B1", slot2: "3rd-2" },  // Winner B vs Best 3rd #2
-  { slot1: "E2", slot2: "F2" },     // Runner E vs Runner F
-  { slot1: "C1", slot2: "3rd-3" },  // Winner C vs Best 3rd #3
-  { slot1: "A2", slot2: "B2" },     // Runner A vs Runner B
-  { slot1: "D1", slot2: "3rd-4" },  // Winner D vs Best 3rd #4
-  { slot1: "G2", slot2: "H2" },     // Runner G vs Runner H
-  
-  // Right bracket (matches 8-15)
-  { slot1: "E1", slot2: "3rd-5" },  // Winner E vs Best 3rd #5
-  { slot1: "I2", slot2: "J2" },     // Runner I vs Runner J
-  { slot1: "F1", slot2: "3rd-6" },  // Winner F vs Best 3rd #6
-  { slot1: "K2", slot2: "L2" },     // Runner K vs Runner L
-  { slot1: "G1", slot2: "3rd-7" },  // Winner G vs Best 3rd #7
-  { slot1: "I1", slot2: "J1" },     // Winner I vs Winner J (special)
-  { slot1: "H1", slot2: "3rd-8" },  // Winner H vs Best 3rd #8
-  { slot1: "K1", slot2: "L1" },     // Winner K vs Winner L (special)
+  // Match 73 (Index 0)
+  { slot1: "A2", slot2: "B2" },
+  // Match 74 (Index 1) - E1 vs 3rd place from pool
+  { slot1: "E1", slot2: "3rd" },
+  // Match 75 (Index 2)
+  { slot1: "F1", slot2: "C2" },
+  // Match 76 (Index 3)
+  { slot1: "C1", slot2: "F2" },
+  // Match 77 (Index 4) - I1 vs 3rd place from pool
+  { slot1: "I1", slot2: "3rd" },
+  // Match 78 (Index 5)
+  { slot1: "E2", slot2: "I2" },
+  // Match 79 (Index 6) - A1 vs 3rd place from pool
+  { slot1: "A1", slot2: "3rd" },
+  // Match 80 (Index 7) - L1 vs 3rd place from pool
+  { slot1: "L1", slot2: "3rd" },
+  // Match 81 (Index 8) - D1 vs 3rd place from pool
+  { slot1: "D1", slot2: "3rd" },
+  // Match 82 (Index 9) - G1 vs 3rd place from pool
+  { slot1: "G1", slot2: "3rd" },
+  // Match 83 (Index 10)
+  { slot1: "K2", slot2: "L2" },
+  // Match 84 (Index 11)
+  { slot1: "H1", slot2: "J2" },
+  // Match 85 (Index 12) - B1 vs 3rd place from pool
+  { slot1: "B1", slot2: "3rd" },
+  // Match 86 (Index 13)
+  { slot1: "D2", slot2: "G2" },
+  // Match 87 (Index 14)
+  { slot1: "J1", slot2: "H2" },
+  // Match 88 (Index 15) - K1 vs 3rd place from pool
+  { slot1: "K1", slot2: "3rd" },
 ]
 
 /**
- * Build the Round of 32 matches
+ * Build the Round of 32 matches using official FIFA allocation
  */
 export function buildRoundOf32(qualified: {
   firstPlace: QualifiedTeam[]
@@ -146,23 +165,59 @@ export function buildRoundOf32(qualified: {
   // Create lookup maps
   const firstByGroup = new Map(firstPlace.map(t => [t.groupLetter, t]))
   const secondByGroup = new Map(secondPlace.map(t => [t.groupLetter, t]))
+  const thirdByGroup = new Map(best8Third.map(t => [t.groupLetter, t]))
+
+  // Get official third-place allocation
+  const qualifiedGroups = best8Third.map(t => t.groupLetter)
+  const allocationResult = resolveThirdPlaceSlots(qualifiedGroups)
+
+  // If fallback was used, we don't have official mapping
+  if (allocationResult.usedFallback) {
+    console.error(
+      `❌ ERROR: Third-place combination "${allocationResult.combinationKey}" not found in official FIFA allocations. ` +
+      `The selected 8 third-place teams do not match FIFA's official brackets. Bracket generation failed.`
+    )
+    // Return matches with nulls to signal the error visibly
+    return R32_PAIRINGS.map((_, index) => ({
+      id: `r32-${index}`,
+      round: 1,
+      position: index,
+      team1: null,
+      team2: null,
+      winner: null,
+    }))
+  }
+
+  // Create reverse mapping: slot index → which group's 3rd place goes there
+  // allocation[groupLetter] = slotIndex
+  // We need: slotIndex → groupLetter
+  const groupBySlotIndex = new Map<number, string>()
+  for (const [group, slotIndex] of Object.entries(allocationResult.slots)) {
+    groupBySlotIndex.set(Number(slotIndex), group)
+  }
 
   const matches: Match[] = R32_PAIRINGS.map((pairing, index) => {
     const getTeam = (slot: string): QualifiedTeam | null => {
-      if (slot.startsWith("3rd-")) {
-        const thirdIndex = parseInt(slot.split("-")[1]) - 1
-        return best8Third[thirdIndex] || null
+      // Handle "3rd" slots using official allocation
+      if (slot === "3rd") {
+        const assignedGroup = groupBySlotIndex.get(index)
+        if (!assignedGroup) {
+          console.error(`No third-place team assigned for match index ${index}`)
+          return null
+        }
+        return thirdByGroup.get(assignedGroup) || null
       }
-      
+
+      // Handle standard slots (A1, C2, etc.)
       const group = slot[0]
       const position = slot[1]
-      
+
       if (position === "1") {
         return firstByGroup.get(group) || null
       } else if (position === "2") {
         return secondByGroup.get(group) || null
       }
-      
+
       return null
     }
 
