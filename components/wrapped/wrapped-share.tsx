@@ -111,7 +111,7 @@ export function WrappedShare({ profile, bracket, onReplay }: Props) {
       {/* Share Sheet */}
       {bracket && (
         <ShareSheet
-          card={extractShareCard(bracket)}
+          card={extractShareCard(bracket, profile.displayName)}
           isOpen={shareSheetOpen}
           onClose={() => setShareSheetOpen(false)}
         />

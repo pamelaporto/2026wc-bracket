@@ -97,7 +97,7 @@ export function WrappedShareDocument({
   advancingThirdGroups,
   onReplay,
 }: Props) {
-  const shareMessage = `My World Cup 2026 Prediction:\n🏆 Champion: ${profile.champion?.name ?? "TBD"}\n🎭 ${profile.personalityArchetype}\n"${profile.headline}"\n\nPick yours → https://futbolmode.com`
+  const shareMessage = `🏆 Champion: ${profile.champion?.name ?? "TBD"}\n🎭 ${profile.personalityArchetype}\n"${profile.headline}"\n\nPick yours → https://futbolmode.com`
 
   const [copied, setCopied] = useState(false)
 
@@ -107,7 +107,6 @@ export function WrappedShareDocument({
         await navigator.share({
           title: "My World Cup 2026 Prediction",
           text: shareMessage,
-          url: "https://futbolmode.com",
         })
       } catch { /* user cancelled */ }
     } else {

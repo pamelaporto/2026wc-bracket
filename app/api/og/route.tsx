@@ -202,13 +202,29 @@ function renderCard(card: ShareCard) {
         </div>
       </div>
 
+      {/* Display name row */}
+      {card.displayName && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: 24,
+            marginBottom: 16,
+          }}
+        >
+          <span style={{ color: "#ffffff", fontSize: 20, fontWeight: 700, letterSpacing: "-0.01em" }}>
+            {card.displayName}'s Prediction
+          </span>
+        </div>
+      )}
+
       {/* Footer */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginTop: 28,
+          marginTop: card.displayName ? 12 : 28,
           paddingTop: 16,
           borderTop: `1px solid ${BORDER}`,
         }}

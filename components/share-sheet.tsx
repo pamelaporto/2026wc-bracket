@@ -95,7 +95,7 @@ export function ShareSheet({ card, isOpen, onClose }: ShareSheetProps) {
               {/* Download */}
               <a
                 href={ogUrl}
-                download="my-prophecy-2026.png"
+                download="my-prediction-2026.png"
                 className="ss-action-btn ss-action-btn--primary"
                 target="_blank"
                 rel="noopener noreferrer"

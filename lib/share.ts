@@ -16,11 +16,13 @@ export type ShareCard = {
   finalist2: ShareTeam | null
   /** Up to 4 semi-finalists (team1/team2 of each SF match) */
   semis: Array<ShareTeam | null>
+  /** User's display name for the image */
+  displayName?: string
 }
 
 // ─── Extract minimal share data from full bracket state ───────────────────────
 
-export function extractShareCard(bracket: BracketState): ShareCard {
+export function extractShareCard(bracket: BracketState, displayName?: string): ShareCard {
   const toShareTeam = (t: { name: string; colors?: string[] } | null): ShareTeam | null =>
     t ? { name: t.name, colors: t.colors ?? ["#6B7280", "#9CA3AF"] } : null
 
@@ -38,6 +40,7 @@ export function extractShareCard(bracket: BracketState): ShareCard {
     finalist1: toShareTeam(finalMatch?.team1 ?? null),
     finalist2: toShareTeam(finalMatch?.team2 ?? null),
     semis: semis.slice(0, 4),
+    displayName,
   }
 }
 
