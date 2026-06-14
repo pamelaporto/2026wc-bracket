@@ -196,8 +196,11 @@ export default function BracketPage() {
           ) : undefined}
         />
 
-        {/* New Prophecy — subtle persistent action for returning users */}
+        {/* Actions — subtle persistent row for returning users */}
         <div className="bk-actions-row">
+          <Link href="/my-prediction" className="bk-actions-link">
+            My prediction
+          </Link>
           <button className="bk-new-prophecy-btn" onClick={clearAllData}>
             New prediction
           </button>
@@ -365,12 +368,31 @@ export default function BracketPage() {
           color: rgba(255, 255, 255, 0.9);
         }
 
-        /* ── New Prophecy action row ── */
+        /* ── Actions row ── */
         .bk-actions-row {
           flex-shrink: 0;
           display: flex;
           justify-content: flex-end;
+          align-items: center;
+          gap: 20px;
           padding: 8px 28px 0;
+        }
+        .bk-actions-link {
+          background: none;
+          border: none;
+          color: rgba(255, 255, 255, 0.28);
+          font-size: 11px;
+          font-family: inherit;
+          font-weight: 500;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          cursor: pointer;
+          padding: 6px 0;
+          transition: color 0.15s ease;
+          text-decoration: none;
+        }
+        .bk-actions-link:hover {
+          color: rgba(255, 255, 255, 0.48);
         }
         .bk-new-prophecy-btn {
           background: none;

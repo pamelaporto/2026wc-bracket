@@ -50,6 +50,7 @@ export default function Home() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [groups, setGroups] = useState<GroupsState>((teamsData as any).groups as GroupsState)
+  const [hasPrediction, setHasPrediction] = useState(false)
 
   // intro timing
   const [introExiting, setIntroExiting] = useState(false)
@@ -74,6 +75,19 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true)
+
+    // Check if a prediction exists
+    const bracketRaw = localStorage.getItem(BRACKET_PICKS_KEY)
+    if (bracketRaw) {
+      try {
+        const bracket = JSON.parse(bracketRaw)
+        if (bracket.champion) {
+          setHasPrediction(true)
+        }
+      } catch {
+        // ignore
+      }
+    }
 
     // restore saved picks (if they exist)
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -420,6 +434,11 @@ export default function Home() {
                   : handleContinueFromGroups
               }
               continueLabel="Continue"
+              rightExtra={hasPrediction && (
+                <a href="/my-prediction" className="home-prediction-link">
+                  My prediction
+                </a>
+              )}
             />
           )}
           

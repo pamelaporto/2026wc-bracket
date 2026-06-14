@@ -5645,3 +5645,25 @@
 .bk-recovery-jump:hover {
   opacity: 0.88;
 }
+
+/* ─── Home page: My prediction link ─────────────────────────────────────── */
+.home-prediction-link {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 6px 0;
+  transition: color 0.15s ease;
+  text-decoration: none;
+  margin-right: 12px;
+  display: inline-block;
+}
+
+.home-prediction-link:hover {
+  color: rgba(255, 255, 255, 0.48);
+}
